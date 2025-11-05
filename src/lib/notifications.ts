@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabaseClient'
+import { callApi } from './apiClient'
 
 export interface Notification {
   id: string
@@ -587,13 +588,12 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
     // EXPENSE NOTIFICATIONS
     // ============================================================================
 
-    // Fetch recent expenses (last 30 days) - NO SUPABASE DIRECT QUERY
-    // Use API route to get fresh auth token and avoid 400 errors
+    // Fetch recent expenses (last 30 days) - Use callApi for bearer token
     let expenses: any[] = []
     let expensesError: any = null
     
     try {
-      const response = await fetch(`/api/gyms/${gymId}/expenses`)
+      const response = await callApi(`/api/gyms/${gymId}/expenses`)
       if (response.ok) {
         const result = await response.json()
         expenses = result.expenses || []

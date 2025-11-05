@@ -24,6 +24,7 @@ import {
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import { useGymContext } from '@/hooks/useGymContext'
+import { callApi } from '@/lib/apiClient'
 
 interface Expense {
   id: string
@@ -80,8 +81,8 @@ export default function EditExpense() {
         return
       }
       
-      // Fetch all expenses via API, then find the one we need
-      const response = await fetch(`/api/gyms/${gymId}/expenses`)
+      // Fetch all expenses via callApi (includes bearer token)
+      const response = await callApi(`/api/gyms/${gymId}/expenses`)
       if (!response.ok) {
         throw new Error(`API returned ${response.status}`)
       }

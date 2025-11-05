@@ -27,6 +27,7 @@ import {
   PieChart
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import { callApi } from '@/lib/apiClient'
 
 interface Expense {
   id: string
@@ -68,8 +69,8 @@ export default function ExpenseDetailsModal({
 
   const fetchCategoryStats = async () => {
     try {
-      // Fetch all expenses via API to get fresh auth token
-      const response = await fetch(`/api/gyms/${expense.gym_id}/expenses`)
+      // Fetch all expenses via callApi (includes bearer token)
+      const response = await callApi(`/api/gyms/${expense.gym_id}/expenses`)
       if (!response.ok) {
         throw new Error(`API returned ${response.status}`)
       }
