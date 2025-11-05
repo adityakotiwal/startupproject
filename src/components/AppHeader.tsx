@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
-import { usePrefetchData } from '@/hooks/useOptimizedData'
 import { Button } from '@/components/ui/button'
 import { Dumbbell, LogOut, Activity } from 'lucide-react'
 import Link from 'next/link'
@@ -18,7 +17,6 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
   const { user, signOut } = useAuth()
   const { gymId } = useGymContext()
   const pathname = usePathname()
-  const prefetch = usePrefetchData()
 
   const handleSignOut = async () => {
     try {
@@ -33,22 +31,15 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
   }
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', prefetch: null },
-    { href: '/members', label: 'Members', prefetch: prefetch.prefetchMembers },
-    { href: '/staff', label: 'Staff', prefetch: prefetch.prefetchStaff },
-    { href: '/equipment', label: 'Equipment', prefetch: prefetch.prefetchEquipment },
-    { href: '/membership-plans', label: 'Plans', prefetch: null },
-    { href: '/expenses', label: 'Expenses', prefetch: prefetch.prefetchExpenses },
-    { href: '/payments', label: 'Payments', prefetch: prefetch.prefetchPayments },
-    { href: '/analytics', label: 'Analytics', prefetch: null },
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/members', label: 'Members' },
+    { href: '/staff', label: 'Staff' },
+    { href: '/equipment', label: 'Equipment' },
+    { href: '/membership-plans', label: 'Plans' },
+    { href: '/expenses', label: 'Expenses' },
+    { href: '/payments', label: 'Payments' },
+    { href: '/analytics', label: 'Analytics' },
   ]
-  
-  // Prefetch data when user hovers over nav links
-  const handleMouseEnter = (prefetchFn: ((gymId: string) => Promise<void>) | null) => {
-    if (prefetchFn && gymId) {
-      prefetchFn(gymId)
-    }
-  }
 
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-50">
@@ -67,13 +58,12 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
               </div>
             </Link>
             
-            {/* Enhanced Navigation Menu with Prefetching */}
+            {/* Navigation Menu - prefetch removed to prevent site freeze */}
             <nav className="hidden md:flex space-x-1">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onMouseEnter={() => handleMouseEnter(item.prefetch)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive(item.href)
                       ? 'bg-blue-100 text-blue-700'

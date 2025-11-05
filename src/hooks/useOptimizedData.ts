@@ -54,10 +54,9 @@ export function useMembers(gymId: string | null) {
       return membersWithPayments
     },
     enabled: !!gymId,
-    staleTime: 0, // Always fetch fresh data to ensure payments are up-to-date
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes when not in use (formerly cacheTime)
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true, // Always refetch when component mounts
+    staleTime: 2 * 60 * 1000, // Fresh for 2 minutes (balance between freshness and performance)
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes when not in use
+    // Let global config handle refetch behavior to prevent site freeze
   })
 }
 
