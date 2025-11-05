@@ -1,3 +1,4 @@
+import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -247,7 +248,13 @@ export function usePrefetchData() {
       })
     },
     
-    prefetchExpenses: async (gymId: string) => {
+    prefetchExpenses: async (gymId: string | null) => {
+      // Gate: Don't call expenses until gymId exists
+      if (!gymId) {
+        console.warn('[expenses] skip: missing gymId')
+        return
+      }
+      
       await queryClient.prefetchQuery({
         queryKey: ['expenses', gymId],
         queryFn: async () => {
@@ -258,7 +265,7 @@ export function usePrefetchData() {
             .eq('gym_id', gymId)
           
           if (error) {
-            console.log('⚠️ Expenses fetch skipped (table may not exist or no permissions):', error.message)
+            console.log('⚠️ Expenses fetch error:', error.message)
             return []
           }
           
@@ -296,4 +303,46 @@ export function useInvalidateQueries() {
     invalidatePayments: () => queryClient.invalidateQueries({ queryKey: ['payments'] }),
     invalidateAll: () => queryClient.invalidateQueries(),
   }
+}
+
+// ==================== FOCUS REHYDRATION ====================
+
+/**
+ * Hook to rehydrate all queries on focus/visibility
+ * Ensures data is fresh when user returns to tab
+ */
+export function useFocusRehydration(gymId: string | null) {
+  const queryClient = useQueryClient()
+  
+  React.useEffect(() => {
+    if (!gymId) return
+    
+    const handleRehydrate = async () => {
+      // Refresh auth session first
+      await supabase.auth.getSession()
+      
+      // Refetch all queries
+      await Promise.allSettled([
+        queryClient.refetchQueries({ queryKey: ['members', gymId] }),
+        queryClient.refetchQueries({ queryKey: ['staff', gymId] }),
+        queryClient.refetchQueries({ queryKey: ['equipment', gymId] }),
+        queryClient.refetchQueries({ queryKey: ['payments', gymId] }),
+        gymId ? queryClient.refetchQueries({ queryKey: ['expenses', gymId] }) : Promise.resolve(),
+      ])
+    }
+    
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleRehydrate()
+      }
+    }
+    
+    window.addEventListener('focus', handleRehydrate)
+    document.addEventListener('visibilitychange', handleVisibility)
+    
+    return () => {
+      window.removeEventListener('focus', handleRehydrate)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [gymId, queryClient])
 }

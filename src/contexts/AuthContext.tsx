@@ -24,19 +24,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
 
-  // Add navigation loading timeout protection
-  useEffect(() => {
-    // Prevent infinite loading states - force stop after 5 seconds
-    const loadingTimeout = setTimeout(() => {
-      if (loading && initialLoadComplete) {
-        console.log('⏰ Force stopping stuck loading state')
-        setLoading(false)
-      }
-    }, 5000)
-
-    return () => clearTimeout(loadingTimeout)
-  }, [loading, initialLoadComplete])
-
   useEffect(() => {
     let mounted = true
     
@@ -85,54 +72,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
-    // Handle page visibility changes - FIXED for session persistence
-    const handleVisibilityChange = async () => {
-      if (!mounted || !initialLoadComplete) return
+    // Handle page visibility and focus - rehydrate tokens and session
+    const handleFocusOrVisibility = async () => {
+      if (!mounted || !initialLoadComplete || !user) return
       
-      if (document.visibilityState === 'visible') {
-        try {
-          // Only check session if user was logged in
-          if (!user) return
-          
-          // Quick session validity check
-          const { data: { session }, error } = await supabase.auth.getSession()
-          
-          if (error) {
-            // Network error - keep user logged in, don't spam console
-            return
-          }
-          
-          if (!session || !session.user) {
-            // Session might be expired - double check with getUser
-            const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-            
-            if (!authUser && !authError) {
-              // Truly expired - sign out silently
-              console.log('Session expired - signing out')
-              setUser(null)
-              setLoading(false)
-            }
-            // If authError exists, it's likely a network issue - keep logged in
-          }
-          
-          // Reset loading state if stuck
-          if (loading) {
-            setLoading(false)
-          }
-        } catch (error) {
-          // Don't sign out on errors - keep user logged in
+      try {
+        // Refresh session tokens on focus/visibility
+        await supabase.auth.getSession()
+        
+        // Optionally refresh profile if session valid
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (!authUser) {
+          console.log('Session expired - signing out')
+          setUser(null)
+          setLoading(false)
         }
+      } catch (error) {
+        // Keep user logged in on network errors
       }
     }
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleFocusOrVisibility()
+      }
+    }
+
+    window.addEventListener('focus', handleFocusOrVisibility)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       mounted = false
       subscription.unsubscribe()
+      window.removeEventListener('focus', handleFocusOrVisibility)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [user, initialLoadComplete])
 
   const getProfile = async (skipLoading = false) => {
     try {

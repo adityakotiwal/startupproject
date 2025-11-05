@@ -4,23 +4,7 @@
  */
 
 import { generateWelcomeMessage, generateRenewalReminder, generatePaymentConfirmation, generateFeeDueNotification, WelcomeMessageParams, RenewalReminderParams, PaymentConfirmationParams, FeeDueParams } from './whatsapp-templates';
-import { supabase } from './supabaseClient';
-
-/**
- * Get auth headers for API requests
- */
-async function getAuthHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  
-  return headers;
-}
+import { callApi } from './apiClient';
 
 /**
  * Send welcome WhatsApp message to new member
@@ -43,11 +27,9 @@ export async function sendWelcomeWhatsApp(params: {
       validityDays: params.validityDays,
     });
 
-    const headers = await getAuthHeaders();
-
-    const response = await fetch('/api/whatsapp/send', {
+    // C) Use fresh token for API call
+    const response = await callApi('/api/whatsapp/send', {
       method: 'POST',
-      headers,
       body: JSON.stringify({
         to: params.memberPhone,
         message,
@@ -95,11 +77,9 @@ export async function sendRenewalReminderWhatsApp(params: {
       daysRemaining: params.daysRemaining,
     });
 
-    const headers = await getAuthHeaders();
-
-    const response = await fetch('/api/whatsapp/send', {
+    // C) Use fresh token for API call
+    const response = await callApi('/api/whatsapp/send', {
       method: 'POST',
-      headers,
       body: JSON.stringify({
         to: params.memberPhone,
         message,
@@ -153,11 +133,9 @@ export async function sendPaymentConfirmationWhatsApp(params: {
       receiptNumber: params.receiptNumber,
     });
 
-    const headers = await getAuthHeaders();
-
-    const response = await fetch('/api/whatsapp/send', {
+    // C) Use fresh token for API call
+    const response = await callApi('/api/whatsapp/send', {
       method: 'POST',
-      headers,
       body: JSON.stringify({
         to: params.memberPhone,
         message,
@@ -206,11 +184,9 @@ export async function sendFeeDueWhatsApp(params: {
       dueDate: params.dueDate,
     });
 
-    const headers = await getAuthHeaders();
-
-    const response = await fetch('/api/whatsapp/send', {
+    // C) Use fresh token for API call
+    const response = await callApi('/api/whatsapp/send', {
       method: 'POST',
-      headers,
       body: JSON.stringify({
         to: params.memberPhone,
         message,
@@ -247,11 +223,9 @@ export async function sendBulkWhatsApp(params: {
   messageType?: string;
 }) {
   try {
-    const headers = await getAuthHeaders();
-
-    const response = await fetch('/api/whatsapp/send', {
+    // C) Use fresh token for API call
+    const response = await callApi('/api/whatsapp/send', {
       method: 'PUT',
-      headers,
       body: JSON.stringify({
         recipients: params.recipients.map(r => r.phone),
         message: params.message,

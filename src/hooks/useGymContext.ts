@@ -16,18 +16,6 @@ export function useGymContext() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Add timeout protection for gym loading
-  useEffect(() => {
-    const gymLoadingTimeout = setTimeout(() => {
-      if (loading) {
-        console.log('⏰ Gym context loading timeout - forcing completion')
-        setLoading(false)
-      }
-    }, 3000)
-
-    return () => clearTimeout(gymLoadingTimeout)
-  }, [loading])
-
   useEffect(() => {
     if (!user?.id) {
       setCurrentGym(null)

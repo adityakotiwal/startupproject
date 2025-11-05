@@ -28,6 +28,56 @@ interface WhatsAppRequestBody {
  */
 export async function POST(request: NextRequest) {
   try {
+    // E) Validate Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Missing or invalid authorization header' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.substring(7)
+    
+    // Verify user via bearer token
+    let userId: string | null = null
+    let gymId: string | null = null
+    
+    try {
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+      
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized - Invalid token' },
+          { status: 401 }
+        )
+      }
+      
+      userId = user.id
+      
+      // Get gym_id from user's gym
+      const { data: gym, error: gymError } = await supabaseAdmin
+        .from('gyms')
+        .select('id')
+        .eq('owner_id', userId)
+        .single()
+      
+      if (gymError || !gym) {
+        return NextResponse.json(
+          { error: 'No gym found for user' },
+          { status: 403 }
+        )
+      }
+      
+      gymId = gym.id
+    } catch (error) {
+      console.error('Auth verification failed:', error)
+      return NextResponse.json(
+        { error: 'Unauthorized - Token verification failed' },
+        { status: 401 }
+      )
+    }
+
     // Parse request body
     const body: WhatsAppRequestBody = await request.json()
     const { to, message, messageType = 'notification', metadata = {} } = body
@@ -51,34 +101,6 @@ export async function POST(request: NextRequest) {
 
     // Format phone number for WhatsApp (add country code)
     const whatsappNumber = `91${cleanPhone}` // Indian country code
-
-    // Get user session from Authorization header
-    const authHeader = request.headers.get('authorization')
-    let userId: string | null = null
-    let gymId: string | null = null
-
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7)
-      try {
-        const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-        if (user) {
-          userId = user.id
-          
-          // Get gym_id from user's gym
-          const { data: gym } = await supabaseAdmin
-            .from('gyms')
-            .select('id')
-            .eq('owner_id', userId)
-            .single()
-          
-          if (gym) {
-            gymId = gym.id
-          }
-        }
-      } catch (error) {
-        console.error('Error getting user from token:', error)
-      }
-    }
 
     let whatsappSent = false
     let whatsappError = null
