@@ -108,12 +108,22 @@ export function useEquipment(gymId: string | null) {
 
 // ==================== EXPENSES ====================
 
+/**
+ * Single source of truth for expenses fetching
+ * 🔒 GATED: Will not run without gymId
+ * 🔒 KEY INCLUDES GYM_ID: Prevents cross-gym cache pollution
+ */
 export function useExpenses(gymId: string | null) {
   return useQuery({
-    queryKey: ['expenses', gymId],
+    queryKey: ['expenses', gymId], // 🔒 Key includes gymId
     queryFn: async () => {
+      // 🔒 Runtime trap: Crash in dev if called without gymId
       if (!gymId) {
-        console.warn('⚠️ useExpenses called without gymId')
+        const error = new Error('[useExpenses] Called without gymId — fix the caller')
+        console.error('💥 useExpenses trap:', error.message)
+        if (process.env.NODE_ENV === 'development') {
+          throw error // Crash the caller with stack trace
+        }
         return []
       }
       
@@ -126,11 +136,13 @@ export function useExpenses(gymId: string | null) {
         .order('expense_date', { ascending: false })
 
       if (error) {
-        console.error('❌ Expenses query error:', {
+        // Enhanced error logging for RLS debugging
+        console.error('❌ Expenses Supabase RLS error:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          code: error.code
+          code: error.code,
+          gymId, // Log which gym failed
         })
         throw error
       }
@@ -138,7 +150,7 @@ export function useExpenses(gymId: string | null) {
       console.log(`✅ Fetched ${data?.length || 0} expenses`)
       return data || []
     },
-    enabled: !!gymId, // Only fetch when gymId exists
+    enabled: !!gymId, // 🔒 Only fetch when gymId exists
     staleTime: 3 * 60 * 1000,
     retry: 1, // Only retry once to avoid spam
   })

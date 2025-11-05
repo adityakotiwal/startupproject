@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
 import { supabase } from '@/lib/supabaseClient'
+import { useMembers, usePayments, useExpenses, useMembershipPlans } from '@/hooks/useOptimizedData'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { exportAnalyticsToCSV } from '@/lib/csvExport'
@@ -70,8 +71,16 @@ export default function AnalyticsPage() {
   const { currentGym, gymId, loading: gymLoading } = useGymContext()
   const isClient = useClientOnly()
   
+  // 🔒 Use React Query hooks with built-in gymId gates
+  const { data: members = [], isLoading: membersLoading } = useMembers(gymId)
+  const { data: payments = [], isLoading: paymentsLoading } = usePayments(gymId)
+  const { data: expenses = [], isLoading: expensesLoading } = useExpenses(gymId)
+  const { data: membershipPlans = [], isLoading: plansLoading } = useMembershipPlans(gymId)
+  
+  // Combined loading state from all React Query hooks
+  const loading = membersLoading || paymentsLoading || expensesLoading || plansLoading
+  
   const [activeTab, setActiveTab] = useState('overview')
-  const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('30') // days
   const [exportingReport, setExportingReport] = useState(false)
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
@@ -91,10 +100,12 @@ export default function AnalyticsPage() {
     membersTurnover: 0
   })
 
-  const fetchAnalyticsData = useCallback(async () => {
-    if (!gymId) return
+  const processAnalyticsData = useCallback(() => {
+    // 🔒 GATE: Do not proceed without gymId or if still loading
+    if (!gymId || loading) {
+      return
+    }
 
-    setLoading(true)
     try {
       const days = parseInt(dateRange)
       const startDate = new Date()
@@ -104,18 +115,7 @@ export default function AnalyticsPage() {
       startOfMonth.setDate(1)
       startOfMonth.setHours(0, 0, 0, 0)
 
-      // Fetch all data in parallel
-      const [
-        { data: members },
-        { data: payments },
-        { data: expenses },
-        { data: membershipPlans }
-      ] = await Promise.all([
-        supabase.from('members').select('*').eq('gym_id', gymId),
-        supabase.from('payments').select('*').eq('gym_id', gymId),
-        supabase.from('expenses').select('*').eq('gym_id', gymId),
-        supabase.from('membership_plans').select('*').eq('gym_id', gymId)
-      ])
+      // Use data from React Query hooks (already fetched with gymId gates)
 
       // 1. MEMBER ANALYTICS
       const totalMembers = members?.length || 0
@@ -252,17 +252,14 @@ export default function AnalyticsPage() {
       })
 
     } catch (error) {
-      console.error('Error fetching analytics:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error processing analytics:', error)
     }
-  }, [gymId, dateRange])
+  }, [gymId, dateRange, members, payments, expenses, membershipPlans, loading])
 
+  // Process analytics whenever data changes
   useEffect(() => {
-    if (gymId) {
-      fetchAnalyticsData()
-    }
-  }, [gymId, fetchAnalyticsData])
+    processAnalyticsData()
+  }, [processAnalyticsData])
 
   const exportReport = async () => {
     try {
@@ -307,7 +304,7 @@ export default function AnalyticsPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader onRefresh={fetchAnalyticsData} isRefreshing={loading} />
+        <AppHeader onRefresh={processAnalyticsData} isRefreshing={loading} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header */}
