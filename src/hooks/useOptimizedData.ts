@@ -11,7 +11,10 @@ export function useMembers(gymId: string | null) {
     queryFn: async () => {
       if (!gymId) return []
       
-      const { data, error } = await supabase
+      // ⚡ OPTIMIZED: Fetch members and payment totals in 2 queries instead of N+1
+      
+      // 1) Fetch all members with their membership plans
+      const { data: members, error: membersError } = await supabase
         .from('members')
         .select(`
           *,
@@ -24,34 +27,46 @@ export function useMembers(gymId: string | null) {
         .eq('gym_id', gymId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (membersError) throw membersError
+      if (!members) return []
       
-      // Calculate total paid for each member in parallel
-      const membersWithPayments = await Promise.all(
-        (data || []).map(async (member) => {
-          const { data: payments, error: paymentsError } = await supabase
-            .from('payments')
-            .select('amount')
-            .eq('member_id', member.id)
-            .eq('gym_id', gymId)
-          
-          if (paymentsError) {
-            console.error(`❌ Error fetching payments for ${member.custom_fields?.full_name}:`, paymentsError)
-          }
-          
-          const totalPaid = payments?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
-          
-          return {
-            ...member,
-            membership_plans: Array.isArray(member.membership_plans)
-              ? member.membership_plans[0]
-              : member.membership_plans,
-            total_paid: totalPaid,
-          }
-        })
+      // 2) Fetch all payment totals for this gym in ONE query using the view
+      const { data: paymentTotals, error: totalsError } = await supabase
+        .from('member_payment_totals')
+        .select('member_id, total_amount, payment_count, last_payment_date')
+        .eq('gym_id', gymId)
+      
+      if (totalsError) {
+        console.warn('⚠️ Could not fetch payment totals (view may not exist yet):', totalsError.message)
+        // Fallback: if view doesn't exist, return members without payment data
+        // This ensures backward compatibility during migration
+        return members.map(member => ({
+          ...member,
+          membership_plans: Array.isArray(member.membership_plans)
+            ? member.membership_plans[0]
+            : member.membership_plans,
+          total_paid: 0, // Safe fallback
+        }))
+      }
+      
+      // 3) Create a lookup map for O(1) access
+      const totalsByMemberId = new Map(
+        (paymentTotals || []).map(t => [t.member_id, t])
       )
       
-      return membersWithPayments
+      // 4) Merge data in memory (fast!)
+      return members.map(member => {
+        const paymentData = totalsByMemberId.get(member.id)
+        return {
+          ...member,
+          membership_plans: Array.isArray(member.membership_plans)
+            ? member.membership_plans[0]
+            : member.membership_plans,
+          total_paid: paymentData?.total_amount ?? 0,
+          payment_count: paymentData?.payment_count ?? 0,
+          last_payment_date: paymentData?.last_payment_date ?? null,
+        }
+      })
     },
     enabled: !!gymId,
     staleTime: 2 * 60 * 1000, // Fresh for 2 minutes (balance between freshness and performance)
