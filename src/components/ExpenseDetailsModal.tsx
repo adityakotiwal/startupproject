@@ -68,18 +68,25 @@ export default function ExpenseDetailsModal({
 
   const fetchCategoryStats = async () => {
     try {
-      // Fetch all expenses in the same category for analytics
-      const { data: categoryExpenses } = await supabase
-        .from('expenses')
-        .select('amount')
-        .eq('gym_id', expense.gym_id)
-        .eq('category', expense.category)
-        .order('amount', { ascending: false })
+      // Fetch all expenses via API to get fresh auth token
+      const response = await fetch(`/api/gyms/${expense.gym_id}/expenses`)
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`)
+      }
+      
+      const result = await response.json()
+      const allExpenses = result.expenses || []
+      
+      // Filter to same category
+      const categoryExpenses = allExpenses
+        .filter((exp: any) => exp.category === expense.category)
+        .map((exp: any) => ({ amount: exp.amount }))
+        .sort((a: any, b: any) => b.amount - a.amount)
 
-      if (categoryExpenses) {
-        const total = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+      if (categoryExpenses && categoryExpenses.length > 0) {
+        const total = categoryExpenses.reduce((sum: number, exp: any) => sum + exp.amount, 0)
         const average = total / categoryExpenses.length
-        const rank = categoryExpenses.findIndex(exp => exp.amount <= expense.amount) + 1
+        const rank = categoryExpenses.findIndex((exp: any) => exp.amount <= expense.amount) + 1
 
         setCategoryStats({
           totalInCategory: total,

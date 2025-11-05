@@ -587,16 +587,30 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
     // EXPENSE NOTIFICATIONS
     // ============================================================================
 
-    // Fetch recent expenses (last 30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(today.getDate() - 30)
-
-    const { data: expenses, error: expensesError } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('gym_id', gymId)
-      .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-      .order('date', { ascending: false })
+    // Fetch recent expenses (last 30 days) - NO SUPABASE DIRECT QUERY
+    // Use API route to get fresh auth token and avoid 400 errors
+    let expenses: any[] = []
+    let expensesError: any = null
+    
+    try {
+      const response = await fetch(`/api/gyms/${gymId}/expenses`)
+      if (response.ok) {
+        const result = await response.json()
+        expenses = result.expenses || []
+        
+        // Filter to last 30 days
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(today.getDate() - 30)
+        expenses = expenses.filter((exp: any) => 
+          new Date(exp.date || exp.expense_date) >= thirtyDaysAgo
+        )
+      } else {
+        expensesError = { message: `API returned ${response.status}` }
+      }
+    } catch (err) {
+      expensesError = err
+      console.error('Failed to fetch expenses for notifications:', err)
+    }
 
     if (!expensesError && expenses) {
       

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import { useGymContext } from '@/hooks/useGymContext'
 
 interface Expense {
   id: string
@@ -34,10 +35,11 @@ interface Expense {
   created_at: string
 }
 
-export default function EditExpensePage() {
+export default function EditExpense() {
   const router = useRouter()
   const params = useParams()
   const expenseId = params.id as string
+  const { gymId } = useGymContext()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -71,27 +73,36 @@ export default function EditExpensePage() {
 
   const fetchExpense = async () => {
     try {
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', expenseId)
-        .single()
+      // First get gymId from the gym context
+      if (!gymId) {
+        console.error('No gymId available')
+        router.push('/expenses')
+        return
+      }
+      
+      // Fetch all expenses via API, then find the one we need
+      const response = await fetch(`/api/gyms/${gymId}/expenses`)
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`)
+      }
+      
+      const result = await response.json()
+      const allExpenses = result.expenses || []
+      const data = allExpenses.find((exp: any) => exp.id === expenseId)
 
-      if (error) {
-        console.error('Error fetching expense:', error)
+      if (!data) {
+        console.error('Expense not found')
         router.push('/expenses')
         return
       }
 
-      if (data) {
-        setExpense(data)
-        setFormData({
-          category: data.category,
-          description: data.description,
-          amount: data.amount.toString(),
-          expense_date: data.expense_date
-        })
-      }
+      setExpense(data)
+      setFormData({
+        category: data.category,
+        description: data.description,
+        amount: data.amount.toString(),
+        expense_date: data.expense_date
+      })
     } catch (error) {
       console.error('Error:', error)
       router.push('/expenses')
