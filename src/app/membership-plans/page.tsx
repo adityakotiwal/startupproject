@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
+import { useMembershipPlans } from '@/hooks/useOptimizedData'
 import { useNavigationTimeout } from '@/hooks/useNavigationTimeout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,14 +59,17 @@ interface MembershipPlan {
 export default function MembershipPlansPage() {
   const { user } = useAuth()
   const { currentGym, gymId, loading: gymLoading } = useGymContext()
-  const isClient = useClientOnly()
-  const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([])
-  const [loading, setLoading] = useState(true)
+  
+  // React Query optimized data fetching
+  const { data: membershipPlans = [], isLoading, refetch } = useMembershipPlans(gymId)
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [durationFilter, setDurationFilter] = useState<string>('all')
   const [gymNotFound, setGymNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  const loading = isLoading || gymLoading
   
   // Modal states
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -85,66 +89,10 @@ export default function MembershipPlansPage() {
     memberCountRange: { min: '', max: '' }
   })
 
-  // Add gentle timeout protection
-  useEffect(() => {
-    if (!loading) return
-    
-    const gentleTimeout = setTimeout(() => {
-      if (membershipPlans.length > 0 || !user || gymId === null) {
-        console.log('⏰ Gentle timeout - completing loading with data available')
-        setLoading(false)
-      }
-    }, 5000)
-    
-    return () => clearTimeout(gentleTimeout)
-  }, [loading, membershipPlans.length, user, gymId])
-
-  const fetchMembershipPlans = useCallback(async () => {
-    if (!user?.id || gymLoading) {
-      return
-    }
-    
-    if (!gymId) {
-      setLoading(false)
-      return
-    }
-    
-    try {
-      console.log('Fetching membership plans for gym:', gymId)
-      setError(null)
-      setGymNotFound(false)
-
-      // Fetch membership plans for the current gym - same pattern as staff/expenses/equipment
-      const { data, error } = await supabase
-        .from('membership_plans')
-        .select('*')
-        .eq('gym_id', gymId)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error fetching membership plans:', error)
-        setError(error.message)
-        setMembershipPlans([])
-      } else {
-        console.log(`✅ Successfully fetched ${data?.length || 0} membership plans for gym: ${gymId}`)
-        setMembershipPlans(data || [])
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      setError('An unexpected error occurred')
-      setMembershipPlans([])
-    } finally {
-      console.log('Finished fetching membership plans, setting loading to false')
-      setLoading(false)
-    }
-  }, [user?.id, gymId, gymLoading])
-
-  useEffect(() => {
-    if (isClient && user && gymId && !gymLoading) {
-      console.log('🎯 LOADING MEMBERSHIP PLANS DATA FOR GYM:', gymId)
-      fetchMembershipPlans()
-    }
-  }, [isClient, user, gymId, gymLoading, fetchMembershipPlans])
+  // Refresh callback for modals
+  const refreshPlans = () => {
+    refetch()
+  }
 
   // Filter membership plans based on search term, status, and duration
   const filteredPlans = useMemo(() => {
@@ -152,7 +100,7 @@ export default function MembershipPlansPage() {
       const matchesSearch = searchTerm === '' || 
         plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         plan.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        plan.features.some(feature => feature.toLowerCase().includes(searchTerm.toLowerCase()))
+        plan.features.some((feature: string) => feature.toLowerCase().includes(searchTerm.toLowerCase()))
       
       const matchesStatus = statusFilter === 'all' || plan.status.toLowerCase() === statusFilter.toLowerCase()
       const matchesDuration = durationFilter === 'all' || plan.duration_type.toLowerCase() === durationFilter.toLowerCase()
@@ -248,18 +196,18 @@ export default function MembershipPlansPage() {
         alert('Error deleting plan. Please try again.')
       } else {
         alert('Membership plan deleted successfully!')
-        fetchMembershipPlans()
+        refreshPlans()
       }
     } catch (error) {
       console.error('Error:', error)
       alert('Error deleting plan. Please try again.')
     }
   }
-  const popularPlans = membershipPlans.filter(plan => plan.is_popular).length
+  const popularPlans = membershipPlans.filter((plan: any) => plan.is_popular).length
 
   // Auto-refresh with debouncing
   const { debouncedRefresh } = useAutoRefresh({
-    onRefresh: fetchMembershipPlans,
+    onRefresh: refreshPlans,
     interval: 30000,
     enabled: true
   })
@@ -268,10 +216,7 @@ export default function MembershipPlansPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <AppHeader 
-          onRefresh={() => {
-            setLoading(true)
-            debouncedRefresh()
-          }}
+          onRefresh={debouncedRefresh}
           isRefreshing={loading}
         />
         
@@ -553,7 +498,7 @@ export default function MembershipPlansPage() {
                       <div className="mb-6 flex-1">
                         <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">Features:</h4>
                         <div className="space-y-2">
-                          {plan.features.slice(0, 4).map((feature, index) => (
+                          {plan.features.slice(0, 4).map((feature: string, index: number) => (
                             <div key={index} className="flex items-center text-sm text-gray-600">
                               <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                               <span className="line-clamp-1">{feature}</span>
@@ -625,7 +570,7 @@ export default function MembershipPlansPage() {
             setSelectedPlan(null)
           }}
           onPlanUpdated={() => {
-            fetchMembershipPlans()
+            refreshPlans()
             setShowDetailsModal(false)
             setSelectedPlan(null)
           }}
