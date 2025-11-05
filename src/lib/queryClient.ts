@@ -9,12 +9,12 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000,
       // Retry failed requests 1 time
       retry: 1,
-      // Refetch on window focus for fresh data
-      refetchOnWindowFocus: true,
+      // Refetch on window focus ONLY if data is stale
+      refetchOnWindowFocus: 'always',
       // Refetch on reconnect
       refetchOnReconnect: true,
-      // Show cached data while refetching in background
-      refetchOnMount: 'always',
+      // Use cached data on mount if available (don't force refetch)
+      refetchOnMount: false,
     },
   },
 })
