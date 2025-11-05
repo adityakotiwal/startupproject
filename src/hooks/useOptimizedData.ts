@@ -10,8 +10,6 @@ export function useMembers(gymId: string | null) {
     queryFn: async () => {
       if (!gymId) return []
       
-      console.log('📊 Fetching members from API...')
-      
       const { data, error } = await supabase
         .from('members')
         .select(`
@@ -42,8 +40,6 @@ export function useMembers(gymId: string | null) {
           
           const totalPaid = payments?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
           
-          console.log(`💰 Member ${member.custom_fields?.full_name} (ID: ${member.id}): Payments count = ${payments?.length || 0}, Total Paid = ₹${totalPaid}`)
-          
           return {
             ...member,
             membership_plans: Array.isArray(member.membership_plans)
@@ -54,7 +50,6 @@ export function useMembers(gymId: string | null) {
         })
       )
       
-      console.log(`✅ Fetched ${membersWithPayments.length} members with payment data`)
       return membersWithPayments
     },
     enabled: !!gymId,
@@ -73,8 +68,6 @@ export function useStaff(gymId: string | null) {
     queryFn: async () => {
       if (!gymId) return []
       
-      console.log('📊 Fetching staff from API...')
-      
       const { data, error } = await supabase
         .from('staff_details')
         .select('*')
@@ -83,7 +76,6 @@ export function useStaff(gymId: string | null) {
 
       if (error) throw error
       
-      console.log(`✅ Fetched ${data?.length || 0} staff (cached)`)
       return data || []
     },
     enabled: !!gymId,
@@ -99,9 +91,7 @@ export function useEquipment(gymId: string | null) {
     queryFn: async () => {
       if (!gymId) return []
       
-      console.log('📊 Fetching equipment from API...')
-      
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('equipment')
         .select('*')
         .eq('gym_id', gymId)
@@ -109,7 +99,6 @@ export function useEquipment(gymId: string | null) {
 
       if (error) throw error
       
-      console.log(`✅ Fetched ${data?.length || 0} equipment (cached)`)
       return data || []
     },
     enabled: !!gymId,
@@ -123,9 +112,12 @@ export function useExpenses(gymId: string | null) {
   return useQuery({
     queryKey: ['expenses', gymId],
     queryFn: async () => {
-      if (!gymId) return []
+      if (!gymId) {
+        console.warn('⚠️ useExpenses called without gymId')
+        return []
+      }
       
-      console.log('📊 Fetching expenses from API...')
+      console.log('📊 Fetching expenses...', gymId)
       
       const { data, error } = await supabase
         .from('expenses')
@@ -133,13 +125,22 @@ export function useExpenses(gymId: string | null) {
         .eq('gym_id', gymId)
         .order('expense_date', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Expenses query error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        throw error
+      }
       
-      console.log(`✅ Fetched ${data?.length || 0} expenses (cached)`)
+      console.log(`✅ Fetched ${data?.length || 0} expenses`)
       return data || []
     },
-    enabled: !!gymId,
+    enabled: !!gymId, // Only fetch when gymId exists
     staleTime: 3 * 60 * 1000,
+    retry: 1, // Only retry once to avoid spam
   })
 }
 
@@ -150,8 +151,6 @@ export function usePayments(gymId: string | null) {
     queryKey: ['payments', gymId],
     queryFn: async () => {
       if (!gymId) return []
-      
-      console.log('📊 Fetching payments from API...')
       
       const { data, error } = await supabase
         .from('payments')
@@ -166,7 +165,6 @@ export function usePayments(gymId: string | null) {
 
       if (error) throw error
       
-      console.log(`✅ Fetched ${data?.length || 0} payments (cached)`)
       return data || []
     },
     enabled: !!gymId,
@@ -251,27 +249,34 @@ export function usePrefetchData() {
     prefetchExpenses: async (gymId: string | null) => {
       // Gate: Don't call expenses until gymId exists
       if (!gymId) {
-        console.warn('[expenses] skip: missing gymId')
+        console.warn('🛑 Skip expenses prefetch — missing gymId')
         return
       }
       
-      await queryClient.prefetchQuery({
-        queryKey: ['expenses', gymId],
-        queryFn: async () => {
-          console.log('🚀 Prefetching expenses...')
-          const { data, error } = await supabase
-            .from('expenses')
-            .select('*')
-            .eq('gym_id', gymId)
-          
-          if (error) {
-            console.log('⚠️ Expenses fetch error:', error.message)
-            return []
-          }
-          
-          return data || []
-        },
-      })
+      try {
+        console.log('🚀 Prefetching expenses...', gymId)
+        
+        await queryClient.prefetchQuery({
+          queryKey: ['expenses', gymId],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('expenses')
+              .select('*')
+              .eq('gym_id', gymId)
+              .order('expense_date', { ascending: false })
+            
+            if (error) {
+              console.error('❌ Expenses fetch error:', error.message, error.details)
+              throw error
+            }
+            
+            console.log(`✅ Prefetched ${data?.length || 0} expenses`)
+            return data || []
+          },
+        })
+      } catch (err: any) {
+        console.error('🔴 prefetchExpenses failed:', err.message)
+      }
     },
     
     prefetchPayments: async (gymId: string) => {
@@ -310,24 +315,29 @@ export function useInvalidateQueries() {
 /**
  * Hook to rehydrate all queries on focus/visibility
  * Ensures data is fresh when user returns to tab
+ * Only refetches queries where prerequisites (gymId) exist
  */
 export function useFocusRehydration(gymId: string | null) {
   const queryClient = useQueryClient()
   
   React.useEffect(() => {
-    if (!gymId) return
-    
     const handleRehydrate = async () => {
-      // Refresh auth session first
+      // Always refresh auth session first
       await supabase.auth.getSession()
       
-      // Refetch all queries
+      // Only refetch queries if gymId is available
+      if (!gymId) {
+        console.log('⏭️ Skip focus rehydration - no gymId yet')
+        return
+      }
+      
+      // Refetch all queries with valid prerequisites
       await Promise.allSettled([
         queryClient.refetchQueries({ queryKey: ['members', gymId] }),
         queryClient.refetchQueries({ queryKey: ['staff', gymId] }),
         queryClient.refetchQueries({ queryKey: ['equipment', gymId] }),
         queryClient.refetchQueries({ queryKey: ['payments', gymId] }),
-        gymId ? queryClient.refetchQueries({ queryKey: ['expenses', gymId] }) : Promise.resolve(),
+        queryClient.refetchQueries({ queryKey: ['expenses', gymId] }), // Only runs if gymId exists
       ])
     }
     

@@ -45,7 +45,6 @@ export function useGymContext() {
 
         if (gymData) {
           setCurrentGym(gymData)
-          console.log('✅ Current gym set:', gymData)
         } else {
           setCurrentGym(null)
           setError('No gym found')

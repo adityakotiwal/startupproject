@@ -15,7 +15,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import AppHeader from '@/components/AppHeader'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import { useGymContext } from '@/hooks/useGymContext'
-import { useMembers, useStaff, useEquipment, usePayments, useInvalidateQueries } from '@/hooks/useOptimizedData'
+import { useMembers, useStaff, useEquipment, usePayments, useInvalidateQueries, useFocusRehydration } from '@/hooks/useOptimizedData'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 
@@ -30,11 +30,12 @@ export default function Dashboard() {
   const { data: equipment = [], isLoading: loadingEquipment } = useEquipment(gymId)
   const { data: payments = [], isLoading: loadingPayments } = usePayments(gymId)
   const { invalidateAll } = useInvalidateQueries()
+  
+  // Auto-rehydrate queries on focus/visibility (only when gymId exists)
+  useFocusRehydration(gymId)
 
   const [recentActivities, setRecentActivities] = useState([])
   const [upcomingRenewals, setUpcomingRenewals] = useState([])
-
-  console.log('Dashboard - Current user:', user)
   
   // Calculate stats from cached data
   const stats = useMemo(() => {

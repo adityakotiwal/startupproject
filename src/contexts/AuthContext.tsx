@@ -52,13 +52,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initializeAuth()
 
-    // Listen for auth changes
+    // Listen for auth changes (single subscription only)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       
-      console.log('Auth state changed:', event, !!session)
+      // Only log significant auth events (reduce spam)
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        console.log('Auth state changed:', event, !!session)
+      }
       
       // Only handle actual auth changes, not token refreshes
       if (event === 'SIGNED_IN' && session?.user) {
@@ -66,10 +69,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
-      } else if (event === 'TOKEN_REFRESHED') {
-        // Don't reload profile on token refresh, session is still valid
-        console.log('Token refreshed, keeping current user state')
       }
+      // TOKEN_REFRESHED: silently keep current state
     })
 
     // Handle page visibility and focus - rehydrate tokens and session
@@ -126,8 +127,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       if (authUser) {
-        console.log('Auth user found:', authUser)
-        
         // Try to get user profile from profiles table, but fallback to auth user if not found
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -161,7 +160,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
             setUser(fallbackUser)
           } else {
-            console.log('✅ Profile created successfully!')
             // Add compatibility fields
             const userWithCompat = {
               ...createdProfile,
@@ -171,7 +169,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(userWithCompat)
           }
         } else if (error) {
-          console.log('Profile table error (using auth user data):', error)
           // Use auth user data as fallback
           const fallbackUser = {
             id: authUser.id,
@@ -180,10 +177,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
             email: authUser.email || ''
           }
-          console.log('Using fallback user:', fallbackUser)
           setUser(fallbackUser)
         } else {
-          console.log('Profile found:', profile)
           // Add compatibility fields for existing profile
           const userWithCompat = {
             ...profile,
@@ -193,7 +188,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(userWithCompat)
         }
       } else {
-        console.log('No auth user found')
         setUser(null)
       }
     } catch (error) {
@@ -208,21 +202,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true)
-      console.log('Attempting to sign in with:', email)
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log('Supabase signIn response:', { data, error })
-
       if (error) {
         console.error('SignIn error:', error)
         return { error: error.message }
       }
 
-      console.log('SignIn successful, session:', data.session)
       return {}
     } catch (error) {
       console.error('SignIn exception:', error)
