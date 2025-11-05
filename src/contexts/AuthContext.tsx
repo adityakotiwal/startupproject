@@ -85,58 +85,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
-    // Handle page visibility changes to prevent stuck loading states
-    const handleVisibilityChange = () => {
-      if (!mounted) return
+    // Handle page visibility changes - FIXED for session persistence
+    const handleVisibilityChange = async () => {
+      if (!mounted || !initialLoadComplete) return
       
       if (document.visibilityState === 'visible') {
-        // Tab became visible again - if we're stuck in loading, reset it
-        if (loading && initialLoadComplete) {
-          console.log('Tab visible - resetting stuck loading state')
+        console.log('🔄 Tab became visible - checking session...')
+        
+        try {
+          // Verify session is still valid when tab becomes visible
+          const { data: { session } } = await supabase.auth.getSession()
+          
+          if (session && session.user) {
+            // Session exists and is valid - keep user logged in
+            console.log('✅ Session valid - user remains logged in')
+            
+            // Only refresh profile if user state is missing
+            if (!user) {
+              console.log('🔄 Restoring user profile...')
+              await getProfile(true)
+            }
+          } else if (!session && user) {
+            // Session expired but user was logged in - only sign out if truly expired
+            console.log('⚠️ Session check returned null - verifying...')
+            
+            // Double-check by trying to get user
+            const { data: { user: authUser } } = await supabase.auth.getUser()
+            
+            if (!authUser) {
+              console.log('❌ Session truly expired - signing out')
+              setUser(null)
+              setLoading(false)
+            } else {
+              console.log('✅ User still valid - keeping session')
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Visibility check failed (keeping user logged in):', error)
+          // Don't sign out on network errors - keep user logged in
+        }
+        
+        // Reset loading state if stuck
+        if (loading) {
+          console.log('🔓 Resetting stuck loading state')
           setLoading(false)
         }
       }
     }
 
-    // Handle page focus to ensure auth state is current (with debouncing)
-    let focusTimeout: NodeJS.Timeout
-    const handleFocus = async () => {
-      if (!mounted || !initialLoadComplete) return
-      
-      // Clear any existing timeout to debounce rapid focus events
-      clearTimeout(focusTimeout)
-      
-      // Only check session after 2 seconds of focus to avoid rapid checks
-      focusTimeout = setTimeout(async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession()
-          
-          // Only sign out if session is truly expired AND user was logged in
-          if (!session && user) {
-            console.log('Session expired after focus check, signing out')
-            setUser(null)
-            setLoading(false)
-          } else if (session && !user) {
-            // User might have signed in elsewhere, refresh profile
-            console.log('New session detected, refreshing profile')
-            await getProfile(true)
-          }
-        } catch (error) {
-          console.log('Focus session check failed:', error)
-          // Don't sign out on network errors
-        }
-      }, 2000)
-    }
-
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
 
     return () => {
       mounted = false
       subscription.unsubscribe()
-      clearTimeout(focusTimeout) // Clean up focus timeout
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 

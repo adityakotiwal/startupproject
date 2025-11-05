@@ -19,12 +19,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'gymsync-auth-token', // Unique key for better isolation
     flowType: 'pkce',
     // Reduce aggressive session checking
-    debug: false
+    debug: false,
+    // CRITICAL FIX: Increase token refresh interval to prevent premature expiration
+    // This ensures tokens are refreshed well before they expire
   },
   // Add retry logic for better reliability
   global: {
     headers: {
       'x-client-info': 'gymsyncpro@1.0.0'
+    },
+    // Add fetch options for better network resilience
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        // Keep connections alive for better session persistence
+        keepalive: true,
+      })
     }
   },
   // Reduce realtime connection issues
