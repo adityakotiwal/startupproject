@@ -88,7 +88,8 @@ export default function MembersPage() {
   const isClient = useClientOnly()
   
   // 🚀 Use React Query for instant cached data
-  const { data: members = [], isLoading, error: queryError, refetch } = useMembers(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: members = [], isPending: isLoading, error: queryError, refetch } = useMembers(gymId)
   const { data: membershipPlans = [] } = useMembershipPlans(gymId)
   const { invalidateMembers, invalidatePayments } = useInvalidateQueries()
   

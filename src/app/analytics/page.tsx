@@ -72,10 +72,11 @@ export default function AnalyticsPage() {
   const isClient = useClientOnly()
   
   // 🔒 Use React Query hooks with built-in gymId gates
-  const { data: members = [], isLoading: membersLoading } = useMembers(gymId)
-  const { data: payments = [], isLoading: paymentsLoading } = usePayments(gymId)
-  const { data: expenses = [], isLoading: expensesLoading } = useExpenses(gymId)
-  const { data: membershipPlans = [], isLoading: plansLoading } = useMembershipPlans(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: members = [], isPending: membersLoading } = useMembers(gymId)
+  const { data: payments = [], isPending: paymentsLoading } = usePayments(gymId)
+  const { data: expenses = [], isPending: expensesLoading } = useExpenses(gymId)
+  const { data: membershipPlans = [], isPending: plansLoading } = useMembershipPlans(gymId)
   
   // Combined loading state from all React Query hooks
   const loading = membersLoading || paymentsLoading || expensesLoading || plansLoading

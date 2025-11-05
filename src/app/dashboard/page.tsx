@@ -25,10 +25,11 @@ export default function Dashboard() {
   const isClient = useClientOnly()
   
   // React Query optimized data fetching - all data cached and prefetched!
-  const { data: members = [], isLoading: loadingMembers } = useMembers(gymId)
-  const { data: staff = [], isLoading: loadingStaff } = useStaff(gymId)
-  const { data: equipment = [], isLoading: loadingEquipment } = useEquipment(gymId)
-  const { data: payments = [], isLoading: loadingPayments } = usePayments(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: members = [], isPending: loadingMembers } = useMembers(gymId)
+  const { data: staff = [], isPending: loadingStaff } = useStaff(gymId)
+  const { data: equipment = [], isPending: loadingEquipment } = useEquipment(gymId)
+  const { data: payments = [], isPending: loadingPayments } = usePayments(gymId)
   const { invalidateAll } = useInvalidateQueries()
   
   // Auto-rehydrate queries on focus/visibility (only when gymId exists)

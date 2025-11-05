@@ -62,7 +62,8 @@ export default function EquipmentPage() {
   const isClient = useClientOnly()
   
   // React Query optimized data fetching
-  const { data: equipment = [], isLoading, refetch } = useEquipment(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: equipment = [], isPending: isLoading, refetch } = useEquipment(gymId)
   const { invalidateEquipment } = useInvalidateQueries()
   
   const [searchTerm, setSearchTerm] = useState('')

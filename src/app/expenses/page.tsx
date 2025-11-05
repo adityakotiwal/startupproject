@@ -57,7 +57,8 @@ export default function ExpensesPage() {
   const router = useRouter()
   
   // React Query optimized data fetching
-  const { data: expenses = [], isLoading, refetch } = useExpenses(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: expenses = [], isPending: isLoading, refetch } = useExpenses(gymId)
   const { invalidateExpenses } = useInvalidateQueries()
   
   const [searchTerm, setSearchTerm] = useState('')

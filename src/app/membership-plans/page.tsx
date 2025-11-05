@@ -61,7 +61,8 @@ export default function MembershipPlansPage() {
   const { currentGym, gymId, loading: gymLoading } = useGymContext()
   
   // React Query optimized data fetching
-  const { data: membershipPlans = [], isLoading, refetch } = useMembershipPlans(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: membershipPlans = [], isPending, refetch } = useMembershipPlans(gymId)
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -69,7 +70,7 @@ export default function MembershipPlansPage() {
   const [gymNotFound, setGymNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  const loading = isLoading || gymLoading
+  const loading = isPending || gymLoading
   
   // Modal states
   const [showDetailsModal, setShowDetailsModal] = useState(false)

@@ -65,7 +65,8 @@ export default function StaffPage() {
   const isClient = useClientOnly()
   
   // React Query optimized data fetching
-  const { data: staff = [], isLoading, refetch } = useStaff(gymId)
+  // Use isPending instead of isLoading - only true when NO data exists (not during background refetch)
+  const { data: staff = [], isPending: isLoading, refetch } = useStaff(gymId)
   const { invalidateStaff } = useInvalidateQueries()
   
   const [searchTerm, setSearchTerm] = useState('')
