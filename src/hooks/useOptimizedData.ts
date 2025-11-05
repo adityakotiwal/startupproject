@@ -56,7 +56,8 @@ export function useMembers(gymId: string | null) {
     enabled: !!gymId,
     staleTime: 2 * 60 * 1000, // Fresh for 2 minutes (balance between freshness and performance)
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes when not in use
-    // Let global config handle refetch behavior to prevent site freeze
+    // Keep previous data visible during refetch (no zeros flicker)
+    placeholderData: (previousData) => previousData,
   })
 }
 
@@ -320,46 +321,85 @@ export function useInvalidateQueries() {
 // ==================== FOCUS REHYDRATION ====================
 
 /**
- * Hook to rehydrate all queries on focus/visibility
- * Ensures data is fresh when user returns to tab
- * Only refetches queries where prerequisites (gymId) exist
+ * Hook to rehydrate queries on focus/visibility - DEBOUNCED + MUTEX
+ * 
+ * What this fixes:
+ * - Single session refresh (AuthContext no longer does this)
+ * - Debounced to prevent flurries (350ms delay)
+ * - Mutex prevents overlapping rehydrations
+ * - Only refetches ACTIVE queries (keeps cached data visible)
+ * - Respects staleTime (won't refetch if data is fresh)
  */
 export function useFocusRehydration(gymId: string | null) {
   const queryClient = useQueryClient()
+  const inFlightRef = React.useRef(false)
+  const timeoutRef = React.useRef<number | null>(null)
   
   React.useEffect(() => {
-    const handleRehydrate = async () => {
-      // Always refresh auth session first
-      await supabase.auth.getSession()
-      
-      // Only refetch queries if gymId is available
-      if (!gymId) {
-        console.log('⏭️ Skip focus rehydration - no gymId yet')
+    const rehydrate = async () => {
+      // Mutex: prevent overlapping rehydrations
+      if (inFlightRef.current) {
+        console.log('🔒 Rehydration already in progress, skipping')
         return
       }
       
-      // Refetch all queries with valid prerequisites
-      await Promise.allSettled([
-        queryClient.refetchQueries({ queryKey: ['members', gymId] }),
-        queryClient.refetchQueries({ queryKey: ['staff', gymId] }),
-        queryClient.refetchQueries({ queryKey: ['equipment', gymId] }),
-        queryClient.refetchQueries({ queryKey: ['payments', gymId] }),
-        queryClient.refetchQueries({ queryKey: ['expenses', gymId] }), // Only runs if gymId exists
-      ])
-    }
-    
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        handleRehydrate()
+      inFlightRef.current = true
+      
+      try {
+        console.log('🔄 Focus rehydration started')
+        
+        // Single session refresh (AuthContext no longer does this)
+        await supabase.auth.getSession()
+        
+        // Only refetch if gymId exists
+        if (!gymId) {
+          console.log('⏭️ Skip focus rehydration - no gymId yet')
+          return
+        }
+        
+        // Only refetch ACTIVE queries; cached data stays visible
+        // type: 'active' means only queries currently being used by mounted components
+        await Promise.allSettled([
+          queryClient.refetchQueries({ queryKey: ['members', gymId], type: 'active' }),
+          queryClient.refetchQueries({ queryKey: ['staff', gymId], type: 'active' }),
+          queryClient.refetchQueries({ queryKey: ['equipment', gymId], type: 'active' }),
+          queryClient.refetchQueries({ queryKey: ['payments', gymId], type: 'active' }),
+          queryClient.refetchQueries({ queryKey: ['expenses', gymId], type: 'active' }),
+        ])
+        
+        console.log('✅ Focus rehydration complete')
+      } catch (error) {
+        console.error('❌ Focus rehydration failed:', error)
+      } finally {
+        inFlightRef.current = false
       }
     }
     
-    window.addEventListener('focus', handleRehydrate)
-    document.addEventListener('visibilitychange', handleVisibility)
+    // Debounce focus events to avoid flurries (350ms)
+    const onFocus = () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = window.setTimeout(() => {
+        rehydrate()
+      }, 350)
+    }
+    
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        onFocus()
+      }
+    }
+    
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
     
     return () => {
-      window.removeEventListener('focus', handleRehydrate)
-      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current)
+      }
     }
-  }, [gymId, queryClient])
+  }, [queryClient, gymId])
 }

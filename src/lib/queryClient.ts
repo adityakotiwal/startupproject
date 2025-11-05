@@ -3,20 +3,22 @@ import { QueryClient } from '@tanstack/react-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache data for 5 minutes - data is considered fresh during this time
+      // Data is fresh for 5 minutes; keep it on screen during refetch
       staleTime: 5 * 60 * 1000,
       // Keep unused data in cache for 10 minutes
       gcTime: 10 * 60 * 1000,
       // Retry failed requests 1 time
       retry: 1,
-      // Don't refetch on window focus - prevents site freeze when switching tabs
-      // Data is still fresh for 5 min (staleTime), manual refresh available
+      // Don't refetch on window focus - we manage this manually in useFocusRehydration
       refetchOnWindowFocus: false,
-      // Refetch on reconnect only
+      // Refetch on reconnect
       refetchOnReconnect: true,
-      // Refetch on mount only if data is stale (older than 5 min)
-      // This ensures fresh data on navigation without constant refetching
-      refetchOnMount: 'always',
+      // Don't refetch on mount - prevents zeros flicker and uses cache
+      // Was 'always' which caused data to briefly clear on every mount
+      refetchOnMount: false,
+      // ⭐ Keep previous data visible while refetching - NO MORE ZEROS!
+      // @ts-ignore - placeholderData is the new name in v5, but keeping backward compat
+      placeholderData: (previousData: any) => previousData,
     },
   },
 })

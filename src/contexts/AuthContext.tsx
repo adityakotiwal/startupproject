@@ -23,6 +23,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+  
+  // Track previous user ID to detect real sign-in vs focus-triggered refresh
+  const prevUserIdRef = React.useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: { session } } = await supabase.auth.getSession()
         
         if (session?.user && mounted) {
+          prevUserIdRef.current = session.user.id
           await getProfile(true) // Skip loading spinner for initial check
         } else if (mounted) {
           setLoading(false)
@@ -58,57 +62,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       
-      // Only log significant auth events (reduce spam)
+      const currentUserId = session?.user?.id ?? null
+      
+      // Log significant events (optional - helps debugging)
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         console.log('Auth state changed:', event, !!session)
       }
       
-      // Only handle actual auth changes, not token refreshes
-      if (event === 'SIGNED_IN' && session?.user) {
-        await getProfile(false) // Show loading for actual sign-in
-      } else if (event === 'SIGNED_OUT') {
+      // Ignore token refreshes and user updates - don't trigger loading
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+        prevUserIdRef.current = currentUserId
+        return
+      }
+      
+      // Handle sign out
+      if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
+        prevUserIdRef.current = null
+        return
       }
-      // TOKEN_REFRESHED: silently keep current state
-    })
-
-    // Handle page visibility and focus - rehydrate tokens and session
-    const handleFocusOrVisibility = async () => {
-      if (!mounted || !initialLoadComplete || !user) return
       
-      try {
-        // Refresh session tokens on focus/visibility
-        await supabase.auth.getSession()
-        
-        // Optionally refresh profile if session valid
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-        if (!authUser) {
-          console.log('Session expired - signing out')
-          setUser(null)
+      // ONLY treat as real sign-in when moving from "no user" to "some user"
+      // This prevents focus-triggered SIGNED_IN events from showing loading spinner
+      if (event === 'SIGNED_IN' && currentUserId && !prevUserIdRef.current) {
+        // Real sign-in → fetch profile and show loading
+        setLoading(true)
+        try {
+          await getProfile(false)
+        } finally {
           setLoading(false)
         }
-      } catch (error) {
-        // Keep user logged in on network errors
       }
-    }
+      
+      // Update tracked user ID
+      prevUserIdRef.current = currentUserId
+    })
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        handleFocusOrVisibility()
-      }
-    }
-
-    window.addEventListener('focus', handleFocusOrVisibility)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    // ⚠️ REMOVED: Focus/visibility handlers
+    // We no longer call getSession() from AuthContext on focus
+    // Supabase automatically refreshes tokens, and data rehydration 
+    // is handled by useFocusRehydration hook in one place
 
     return () => {
       mounted = false
       subscription.unsubscribe()
-      window.removeEventListener('focus', handleFocusOrVisibility)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user, initialLoadComplete])
+  }, [])
 
   const getProfile = async (skipLoading = false) => {
     try {
