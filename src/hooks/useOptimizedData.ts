@@ -252,10 +252,16 @@ export function usePrefetchData() {
         queryKey: ['expenses', gymId],
         queryFn: async () => {
           console.log('🚀 Prefetching expenses...')
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('expenses')
             .select('*')
             .eq('gym_id', gymId)
+          
+          if (error) {
+            console.log('⚠️ Expenses fetch skipped (table may not exist or no permissions):', error.message)
+            return []
+          }
+          
           return data || []
         },
       })

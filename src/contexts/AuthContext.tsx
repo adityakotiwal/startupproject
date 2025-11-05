@@ -90,45 +90,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!mounted || !initialLoadComplete) return
       
       if (document.visibilityState === 'visible') {
-        console.log('🔄 Tab became visible - checking session...')
-        
         try {
-          // Verify session is still valid when tab becomes visible
-          const { data: { session } } = await supabase.auth.getSession()
+          // Only check session if user was logged in
+          if (!user) return
           
-          if (session && session.user) {
-            // Session exists and is valid - keep user logged in
-            console.log('✅ Session valid - user remains logged in')
+          // Quick session validity check
+          const { data: { session }, error } = await supabase.auth.getSession()
+          
+          if (error) {
+            // Network error - keep user logged in, don't spam console
+            return
+          }
+          
+          if (!session || !session.user) {
+            // Session might be expired - double check with getUser
+            const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
             
-            // Only refresh profile if user state is missing
-            if (!user) {
-              console.log('🔄 Restoring user profile...')
-              await getProfile(true)
-            }
-          } else if (!session && user) {
-            // Session expired but user was logged in - only sign out if truly expired
-            console.log('⚠️ Session check returned null - verifying...')
-            
-            // Double-check by trying to get user
-            const { data: { user: authUser } } = await supabase.auth.getUser()
-            
-            if (!authUser) {
-              console.log('❌ Session truly expired - signing out')
+            if (!authUser && !authError) {
+              // Truly expired - sign out silently
+              console.log('Session expired - signing out')
               setUser(null)
               setLoading(false)
-            } else {
-              console.log('✅ User still valid - keeping session')
             }
+            // If authError exists, it's likely a network issue - keep logged in
+          }
+          
+          // Reset loading state if stuck
+          if (loading) {
+            setLoading(false)
           }
         } catch (error) {
-          console.log('⚠️ Visibility check failed (keeping user logged in):', error)
-          // Don't sign out on network errors - keep user logged in
-        }
-        
-        // Reset loading state if stuck
-        if (loading) {
-          console.log('🔓 Resetting stuck loading state')
-          setLoading(false)
+          // Don't sign out on errors - keep user logged in
         }
       }
     }
@@ -148,15 +140,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLoading(true)
       }
       
-      // Add timeout to prevent infinite loading
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auth timeout')), 10000)
-      )
+      // Get auth user - removed aggressive timeout
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       
-      const { data: { user: authUser } } = await Promise.race([
-        supabase.auth.getUser(),
-        timeout
-      ]) as any
+      // Handle auth errors gracefully
+      if (authError) {
+        console.log('⚠️ Auth error (treating as not logged in):', authError.message)
+        setUser(null)
+        return
+      }
       
       if (authUser) {
         console.log('Auth user found:', authUser)
