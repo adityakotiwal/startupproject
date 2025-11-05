@@ -1,6 +1,7 @@
 import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabaseClient'
+import { callApi } from '@/lib/apiClient'
 
 // ==================== MEMBERS ====================
 
@@ -109,14 +110,39 @@ export function useEquipment(gymId: string | null) {
 // ==================== EXPENSES ====================
 
 /**
+ * 🔒 NEW: Fetch expenses via path-based API
+ * Route: /api/gyms/:gymId/expenses (gymId in path, not query param)
+ * This makes it IMPOSSIBLE to call without gymId
+ */
+async function fetchExpenses(gymId: string) {
+  const res = await callApi(`/api/gyms/${encodeURIComponent(gymId)}/expenses`)
+  
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const error = new Error(body?.error || `Expenses API failed with ${res.status}`)
+    console.error('❌ Expenses API error:', {
+      status: res.status,
+      gymId,
+      error: body?.error,
+      hint: body?.migration?.hint
+    })
+    throw error
+  }
+  
+  const { expenses } = await res.json()
+  return expenses as any[]
+}
+
+/**
  * Single source of truth for expenses fetching
  * 🔒 GATED: Will not run without gymId
  * 🔒 KEY INCLUDES GYM_ID: Prevents cross-gym cache pollution
+ * 🔒 NEW PATH: Uses /api/gyms/:gymId/expenses (impossible to call without gymId)
  */
-export function useExpenses(gymId: string | null) {
+export function useExpenses(gymId?: string | null) {
   return useQuery({
     queryKey: ['expenses', gymId], // 🔒 Key includes gymId
-    queryFn: async () => {
+    queryFn: () => {
       // 🔒 Runtime trap: Crash in dev if called without gymId
       if (!gymId) {
         const error = new Error('[useExpenses] Called without gymId — fix the caller')
@@ -124,31 +150,11 @@ export function useExpenses(gymId: string | null) {
         if (process.env.NODE_ENV === 'development') {
           throw error // Crash the caller with stack trace
         }
-        return []
-      }
-      
-      console.log('📊 Fetching expenses...', gymId)
-      
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('gym_id', gymId)
-        .order('expense_date', { ascending: false })
-
-      if (error) {
-        // Enhanced error logging for RLS debugging
-        console.error('❌ Expenses Supabase RLS error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          gymId, // Log which gym failed
-        })
         throw error
       }
       
-      console.log(`✅ Fetched ${data?.length || 0} expenses`)
-      return data || []
+      console.log('📊 Fetching expenses via NEW API...', gymId)
+      return fetchExpenses(gymId)
     },
     enabled: !!gymId, // 🔒 Only fetch when gymId exists
     staleTime: 3 * 60 * 1000,
@@ -266,26 +272,14 @@ export function usePrefetchData() {
       }
       
       try {
-        console.log('🚀 Prefetching expenses...', gymId)
+        console.log('🚀 Prefetching expenses via NEW API...', gymId)
         
         await queryClient.prefetchQuery({
           queryKey: ['expenses', gymId],
-          queryFn: async () => {
-            const { data, error } = await supabase
-              .from('expenses')
-              .select('*')
-              .eq('gym_id', gymId)
-              .order('expense_date', { ascending: false })
-            
-            if (error) {
-              console.error('❌ Expenses fetch error:', error.message, error.details)
-              throw error
-            }
-            
-            console.log(`✅ Prefetched ${data?.length || 0} expenses`)
-            return data || []
-          },
+          queryFn: () => fetchExpenses(gymId), // Use the same API fetcher
         })
+        
+        console.log(`✅ Prefetched expenses via /api/gyms/${gymId}/expenses`)
       } catch (err: any) {
         console.error('🔴 prefetchExpenses failed:', err.message)
       }
