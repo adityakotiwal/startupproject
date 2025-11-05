@@ -213,8 +213,8 @@ export function useMembershipPlans(gymId: string | null) {
     },
     enabled: !!gymId,
     staleTime: 10 * 60 * 1000, // 10 minutes - plans change infrequently
-    refetchOnWindowFocus: false, // Don't refetch when switching tabs - plans are static
-    refetchOnMount: false, // Use cached data on mount
+    // Let global config handle refetch behavior (refetchOnMount: true)
+    // Using isPending in components prevents loading spinner during background refetch
   })
 }
 

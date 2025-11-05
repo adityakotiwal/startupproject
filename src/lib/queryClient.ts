@@ -9,12 +9,13 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000,
       // Retry failed requests 1 time
       retry: 1,
-      // Refetch on window focus ONLY if data is stale
-      refetchOnWindowFocus: 'always',
+      // Refetch on window focus only if data is stale (after 5 min)
+      refetchOnWindowFocus: true,
       // Refetch on reconnect
       refetchOnReconnect: true,
-      // Use cached data on mount if available (don't force refetch)
-      refetchOnMount: false,
+      // Always refetch when component mounts (ensures fresh data on navigation)
+      // BUT use isPending in components to avoid loading spinner during background refetch
+      refetchOnMount: true,
     },
   },
 })
