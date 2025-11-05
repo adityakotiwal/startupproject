@@ -23,6 +23,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Skip static generation for certain routes
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 export default nextConfig;
