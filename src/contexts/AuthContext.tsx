@@ -29,10 +29,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let mounted = true
+    let timeoutId: NodeJS.Timeout
     
     // Get initial session without showing loading if we already have a user
     const initializeAuth = async () => {
       try {
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (mounted && loading) {
+            console.warn('⚠️ Auth initialization timeout - clearing loading state')
+            setLoading(false)
+            setInitialLoadComplete(true)
+          }
+        }, 10000) // 10 second timeout
+        
         const { data: { session } } = await supabase.auth.getSession()
         
         if (session?.user && mounted) {
@@ -44,12 +54,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (mounted) {
           setInitialLoadComplete(true)
+          clearTimeout(timeoutId)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (mounted) {
           setLoading(false)
           setInitialLoadComplete(true)
+          clearTimeout(timeoutId)
         }
       }
     }
@@ -107,6 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       mounted = false
       subscription.unsubscribe()
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [])
 
@@ -116,8 +129,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLoading(true)
       }
       
-      // Get auth user - removed aggressive timeout
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      // Get auth user with timeout protection
+      const authPromise = supabase.auth.getUser()
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth request timeout')), 8000)
+      )
+      
+      const { data: { user: authUser }, error: authError } = await Promise.race([
+        authPromise,
+        timeoutPromise
+      ]) as any
       
       // Handle auth errors gracefully
       if (authError) {
@@ -190,8 +211,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         setUser(null)
       }
-    } catch (error) {
-      console.error('Error in getProfile:', error)
+    } catch (error: any) {
+      console.error('Error in getProfile:', error?.message || error)
+      if (error?.message === 'Auth request timeout') {
+        console.warn('⚠️ Authentication timed out - treating as not logged in')
+      }
       setUser(null)
     } finally {
       setLoading(false)
