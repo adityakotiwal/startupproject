@@ -481,9 +481,9 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
       
       // 9. Check for maintenance due
       equipment.forEach(item => {
-        if (!item.next_maintenance_date || item.status === 'Out of Service') return
+        if (!item.maintenance_due || item.status === 'Out of Service') return
 
-        const maintenanceDate = new Date(item.next_maintenance_date)
+        const maintenanceDate = new Date(item.maintenance_due)
         const daysUntilMaintenance = Math.ceil((maintenanceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
         // Maintenance overdue
@@ -501,7 +501,7 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
             read: false,
             metadata: {
               category: item.category,
-              maintenanceDate: item.next_maintenance_date,
+              maintenanceDate: item.maintenance_due,
               daysOverdue: Math.abs(daysUntilMaintenance),
               location: item.location
             }
@@ -522,7 +522,7 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
             read: false,
             metadata: {
               category: item.category,
-              maintenanceDate: item.next_maintenance_date,
+              maintenanceDate: item.maintenance_due,
               daysUntilMaintenance,
               location: item.location
             }
@@ -532,13 +532,34 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
 
       // 10. Check for warranty expiring
       equipment.forEach(item => {
-        if (!item.warranty_expiry_date || item.status === 'Out of Service') return
+        if (!item.warranty_expires || item.status === 'Out of Service') return
 
-        const warrantyDate = new Date(item.warranty_expiry_date)
+        const warrantyDate = new Date(item.warranty_expires)
         const daysUntilExpiry = Math.ceil((warrantyDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
+        // Warranty already expired
+        if (daysUntilExpiry < 0 && daysUntilExpiry >= -30) {
+          notifications.push({
+            id: `equipment-warranty-expired-${item.id}`,
+            type: 'equipment_warranty_expiring',
+            title: '⚠️ Equipment Warranty Expired',
+            message: `${item.name} warranty expired ${Math.abs(daysUntilExpiry)} day${Math.abs(daysUntilExpiry) > 1 ? 's' : ''} ago (${warrantyDate.toLocaleDateString('en-IN')})`,
+            priority: 'high',
+            timestamp: new Date().toISOString(),
+            equipmentId: item.id,
+            equipmentName: item.name,
+            actionRequired: true,
+            read: false,
+            metadata: {
+              category: item.category,
+              warrantyExpiryDate: item.warranty_expires,
+              daysExpired: Math.abs(daysUntilExpiry),
+              purchaseDate: item.purchase_date
+            }
+          })
+        }
         // Warranty expiring within 30 days
-        if (daysUntilExpiry > 0 && daysUntilExpiry <= 30) {
+        else if (daysUntilExpiry > 0 && daysUntilExpiry <= 30) {
           notifications.push({
             id: `equipment-warranty-${item.id}`,
             type: 'equipment_warranty_expiring',
@@ -548,11 +569,11 @@ export async function getNotifications(gymId: string): Promise<Notification[]> {
             timestamp: new Date().toISOString(),
             equipmentId: item.id,
             equipmentName: item.name,
-            actionRequired: false,
+            actionRequired: true,
             read: false,
             metadata: {
               category: item.category,
-              warrantyExpiryDate: item.warranty_expiry_date,
+              warrantyExpiryDate: item.warranty_expires,
               daysUntilExpiry,
               purchaseDate: item.purchase_date
             }

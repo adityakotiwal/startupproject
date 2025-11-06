@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, X, Calendar, CreditCard, Gift, UserPlus, AlertCircle, Clock, Send } from 'lucide-react'
+import { Bell, X, Calendar, CreditCard, Gift, UserPlus, AlertCircle, Clock, Send, Wrench, ShieldAlert, XCircle, Dumbbell } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -195,11 +195,11 @@ ${gymName} Management`
       
       // Equipment notifications
       case 'equipment_maintenance_due':
-        return <AlertCircle className="h-5 w-5 text-orange-500" />
+        return <Wrench className="h-5 w-5 text-orange-500" />
       case 'equipment_warranty_expiring':
-        return <Clock className="h-5 w-5 text-blue-500" />
+        return <ShieldAlert className="h-5 w-5 text-amber-600" />
       case 'equipment_out_of_service':
-        return <AlertCircle className="h-5 w-5 text-red-600" />
+        return <XCircle className="h-5 w-5 text-red-600" />
       
       // Expense notifications
       case 'expense_reminder':
@@ -304,27 +304,48 @@ ${gymName} Management`
                           </p>
                           
                           {/* Action Buttons */}
-                          {notification.actionRequired && notification.metadata?.phone && (
+                          {notification.actionRequired && (
                             <div className="flex space-x-2 mt-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => sendWhatsAppReminder(notification)}
-                                disabled={sendingWhatsApp === notification.id}
-                                className="text-xs"
-                              >
-                                {sendingWhatsApp === notification.id ? (
-                                  <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 mr-2"></div>
-                                    Sending...
-                                  </div>
-                                ) : (
-                                  <>
-                                    <Send className="h-3 w-3 mr-1" />
-                                    Send WhatsApp
-                                  </>
-                                )}
-                              </Button>
+                              {/* WhatsApp button for member/staff notifications */}
+                              {notification.metadata?.phone && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => sendWhatsAppReminder(notification)}
+                                  disabled={sendingWhatsApp === notification.id}
+                                  className="text-xs"
+                                >
+                                  {sendingWhatsApp === notification.id ? (
+                                    <div className="flex items-center">
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 mr-2"></div>
+                                      Sending...
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <Send className="h-3 w-3 mr-1" />
+                                      Send WhatsApp
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              
+                              {/* View Equipment button for equipment notifications */}
+                              {(notification.type === 'equipment_maintenance_due' || 
+                                notification.type === 'equipment_warranty_expiring' ||
+                                notification.type === 'equipment_out_of_service') && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    window.location.href = '/equipment'
+                                    setIsOpen(false)
+                                  }}
+                                  className="text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+                                >
+                                  <Dumbbell className="h-3 w-3 mr-1" />
+                                  View Equipment
+                                </Button>
+                              )}
                             </div>
                           )}
 
