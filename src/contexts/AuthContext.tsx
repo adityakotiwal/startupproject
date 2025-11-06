@@ -29,21 +29,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout
+    let initTimeoutId: NodeJS.Timeout
+    let sessionTimeoutId: NodeJS.Timeout
     
     // Get initial session without showing loading if we already have a user
     const initializeAuth = async () => {
       try {
-        // Set a timeout to prevent infinite loading
-        timeoutId = setTimeout(() => {
-          if (mounted && loading) {
-            console.warn('⚠️ Auth initialization timeout - clearing loading state')
+        // Set a HARD timeout to prevent infinite loading - this WILL fire
+        initTimeoutId = setTimeout(() => {
+          if (mounted) {
+            console.warn('⚠️ Auth initialization HARD timeout (5s) - forcing clear')
             setLoading(false)
             setInitialLoadComplete(true)
+            setUser(null)
           }
-        }, 10000) // 10 second timeout
+        }, 5000) // Reduced to 5 seconds for faster recovery
         
-        const { data: { session } } = await supabase.auth.getSession()
+        // Wrap getSession in a race condition
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          sessionTimeoutId = setTimeout(() => reject(new Error('Session timeout')), 3000)
+        })
+        
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
+        
+        clearTimeout(sessionTimeoutId)
         
         if (session?.user && mounted) {
           prevUserIdRef.current = session.user.id
@@ -54,14 +64,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (mounted) {
           setInitialLoadComplete(true)
-          clearTimeout(timeoutId)
+          clearTimeout(initTimeoutId)
         }
-      } catch (error) {
-        console.error('Error initializing auth:', error)
+      } catch (error: any) {
+        console.error('Error initializing auth:', error?.message || error)
         if (mounted) {
           setLoading(false)
           setInitialLoadComplete(true)
-          clearTimeout(timeoutId)
+          setUser(null)
+          clearTimeout(initTimeoutId)
+          clearTimeout(sessionTimeoutId)
         }
       }
     }
@@ -119,7 +131,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       mounted = false
       subscription.unsubscribe()
-      if (timeoutId) clearTimeout(timeoutId)
+      if (initTimeoutId) clearTimeout(initTimeoutId)
+      if (sessionTimeoutId) clearTimeout(sessionTimeoutId)
     }
   }, [])
 
@@ -129,16 +142,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLoading(true)
       }
       
-      // Get auth user with timeout protection
+      // Simple auth check with timeout
       const authPromise = supabase.auth.getUser()
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Auth request timeout')), 8000)
+      const timeout = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('getUser timeout')), 4000)
       )
       
-      const { data: { user: authUser }, error: authError } = await Promise.race([
-        authPromise,
-        timeoutPromise
-      ]) as any
+      const result = await Promise.race([authPromise, timeout])
+      const authUser = result.data.user
+      const authError = result.error
       
       // Handle auth errors gracefully
       if (authError) {
