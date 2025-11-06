@@ -15,6 +15,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [secretCode, setSecretCode] = useState('') // TEMPORARY: Remove this later for production
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
@@ -26,6 +27,12 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // TEMPORARY: Secret code validation - Remove this later for production
+    if (secretCode !== 'aditya') {
+      setError('Invalid secret code. Please contact the administrator.')
+      return
+    }
 
     // Validation
     if (password !== confirmPassword) {
@@ -90,6 +97,21 @@ export default function SignUpPage() {
                 </div>
               )}
               
+              {/* TEMPORARY: Secret Code Field - Remove this later for production */}
+              <div className="space-y-2">
+                <Label htmlFor="secretCode">Secret Code</Label>
+                <Input
+                  id="secretCode"
+                  type="password"
+                  placeholder="Enter secret code"
+                  value={secretCode}
+                  onChange={(e) => setSecretCode(e.target.value)}
+                  required
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">Contact administrator for the secret code</p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
