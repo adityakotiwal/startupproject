@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Bell, X, Calendar, CreditCard, Gift, UserPlus, AlertCircle, Clock, Send, Wrench, ShieldAlert, XCircle, Dumbbell } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +12,7 @@ import { generateBirthdayWish, generateRenewalReminder, generateFeeDueNotificati
 import { supabase } from '@/lib/supabaseClient'
 
 export default function NotificationPanel() {
+  const router = useRouter()
   const { gymId } = useGymContext()
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -337,8 +339,8 @@ ${gymName} Management`
                                   size="sm"
                                   variant="outline"
                                   onClick={() => {
-                                    window.location.href = '/equipment'
                                     setIsOpen(false)
+                                    router.push('/equipment')
                                   }}
                                   className="text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
                                 >
