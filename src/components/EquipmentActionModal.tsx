@@ -160,37 +160,46 @@ export default function EquipmentActionModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
-          <div className="flex items-center space-x-3">
-            {actionType === 'maintenance' ? (
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                <Wrench className="h-5 w-5 text-orange-600" />
+        {/* Header - Gradient like Salary Modal */}
+        <div className={`text-white p-6 rounded-t-lg ${
+          actionType === 'maintenance' 
+            ? 'bg-gradient-to-r from-orange-600 to-orange-700' 
+            : 'bg-gradient-to-r from-blue-600 to-blue-700'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              {actionType === 'maintenance' ? (
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <Wrench className="h-6 w-6 text-white" />
+                </div>
+              ) : (
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="h-6 w-6 text-white" />
+                </div>
+              )}
+              <div>
+                <h2 className="text-xl font-bold">
+                  {actionType === 'maintenance' ? 'Maintenance Action' : 'Warranty Action'}
+                </h2>
+                <p className={actionType === 'maintenance' ? 'text-orange-100' : 'text-blue-100'}>
+                  For {equipment.name}
+                </p>
               </div>
-            ) : (
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <ShieldCheck className="h-5 w-5 text-blue-600" />
-              </div>
-            )}
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {actionType === 'maintenance' ? 'Maintenance Action' : 'Warranty Action'}
-              </h2>
-              <p className="text-sm text-gray-500">{equipment.name}</p>
             </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-6">
             {/* Current Status */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">Current Status</h3>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Current Status</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Equipment:</span>
@@ -390,36 +399,40 @@ export default function EquipmentActionModal({
                 placeholder="Add any additional details..."
               />
             </div>
-          </CardContent>
 
-          {/* Actions */}
-          <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Confirm Action
-                </>
-              )}
-            </Button>
-          </div>
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className={`${
+                  actionType === 'maintenance'
+                    ? 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                } text-white`}
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirm Action
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
         </form>
       </Card>
     </div>
