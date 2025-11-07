@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, Plus, Filter, Download, Wrench, IndianRupee, Calendar, Settings, Eye, Dumbbell, TrendingUp, AlertTriangle, CheckCircle, Edit, Trash2, Clock, RotateCcw } from 'lucide-react'
+import { Search, Plus, Filter, Download, Wrench, IndianRupee, Calendar, Settings, Eye, Dumbbell, TrendingUp, AlertTriangle, CheckCircle, Edit, Trash2, Clock, RotateCcw, ShieldAlert, ShieldCheck } from 'lucide-react'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AppHeader from '@/components/AppHeader'
 import { useClientOnly } from '@/hooks/useClientOnly'
@@ -19,6 +19,7 @@ import { exportEquipmentWithAnalytics } from '@/lib/equipmentCsvExport'
 import EquipmentDetailsModal from '@/components/EquipmentDetailsModal'
 import EditEquipmentModal from '@/components/EditEquipmentModal'
 import EquipmentAdvancedFiltersModal from '@/components/EquipmentAdvancedFiltersModal'
+import EquipmentActionModal from '@/components/EquipmentActionModal'
 
 // Equipment interface - using the table structure we created
 interface Equipment {
@@ -76,6 +77,8 @@ export default function EquipmentPage() {
   const [showEquipmentDetails, setShowEquipmentDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [showActionModal, setShowActionModal] = useState(false)
+  const [actionType, setActionType] = useState<'maintenance' | 'warranty'>('maintenance')
   const [exportingCSV, setExportingCSV] = useState(false)
   const [advancedFilters, setAdvancedFilters] = useState<EquipmentFilterOptions>({
     status: [],
@@ -247,6 +250,14 @@ export default function EquipmentPage() {
     const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
     return daysDiff <= 7 && daysDiff >= 0
   }).length
+  
+  const warrantyExpiringSoon = equipment.filter(item => {
+    if (!item.warranty_expires) return false
+    const expiryDate = new Date(item.warranty_expires)
+    const today = new Date()
+    const daysDiff = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
+    return daysDiff <= 30 && daysDiff >= 0
+  }).length
 
   // Event handlers
   const handleViewEquipment = (equipmentItem: Equipment) => {
@@ -406,6 +417,24 @@ export default function EquipmentPage() {
               <Plus size={20} />
               Add Equipment
             </button>
+
+            {/* Urgent Items Quick Filter */}
+            {(maintenanceDue > 0 || warrantyExpiringSoon > 0) && (
+              <button 
+                onClick={() => {
+                  setAdvancedFilters({
+                    ...advancedFilters,
+                    maintenanceStatus: ['Overdue', 'Due Soon'],
+                    warrantyStatus: ['Expired', 'Expiring Soon']
+                  })
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-200 animate-pulse"
+              >
+                <AlertTriangle size={20} />
+                Urgent Items ({maintenanceDue + warrantyExpiringSoon})
+              </button>
+            )}
+
             <button 
               onClick={handleExportCSV}
               disabled={exportingCSV}
@@ -563,78 +592,55 @@ export default function EquipmentPage() {
                           
                           {/* Quick Actions */}
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            {/* Schedule Maintenance Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                const days = prompt('Schedule maintenance after how many days?', '30')
-                                if (days && !isNaN(Number(days))) {
-                                  try {
-                                    const maintenanceDate = new Date()
-                                    maintenanceDate.setDate(maintenanceDate.getDate() + Number(days))
-                                    
-                                    const { error } = await supabase
-                                      .from('equipment')
-                                      .update({ 
-                                        maintenance_due: maintenanceDate.toISOString().split('T')[0],
-                                        status: 'Active'
-                                      })
-                                      .eq('id', item.id)
-                                    
-                                    if (error) throw error
-                                    alert(`Maintenance scheduled for ${maintenanceDate.toLocaleDateString('en-IN')}`)
-                                    refreshEquipment()
-                                  } catch (error) {
-                                    console.error('Error scheduling maintenance:', error)
-                                    alert('Failed to schedule maintenance')
-                                  }
-                                }
-                              }}
-                              className="group hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200 overflow-hidden"
-                            >
-                              <Wrench className="h-4 w-4 flex-shrink-0" />
-                              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-200 group-hover:ml-2 whitespace-nowrap">
-                                Schedule
-                              </span>
-                            </Button>
+                            {/* Maintenance Action Button */}
+                            {item.maintenance_due && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedEquipment(item)
+                                  setActionType('maintenance')
+                                  setShowActionModal(true)
+                                }}
+                                className={`group ${
+                                  new Date(item.maintenance_due) < new Date()
+                                    ? 'bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100'
+                                    : 'hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300'
+                                } transition-all duration-200 overflow-hidden`}
+                                title={`Maintenance due: ${new Date(item.maintenance_due).toLocaleDateString('en-IN')}`}
+                              >
+                                <Wrench className="h-4 w-4 flex-shrink-0" />
+                                <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-200 group-hover:ml-2 whitespace-nowrap">
+                                  {new Date(item.maintenance_due) < new Date() ? 'Overdue' : 'Maintenance'}
+                                </span>
+                              </Button>
+                            )}
 
-                            {/* Toggle Status Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                const newStatus = item.status === 'Active' ? 'Maintenance' : 'Active'
-                                if (confirm(`Mark ${item.name} as ${newStatus}?`)) {
-                                  try {
-                                    const { error } = await supabase
-                                      .from('equipment')
-                                      .update({ status: newStatus })
-                                      .eq('id', item.id)
-                                    
-                                    if (error) throw error
-                                    refreshEquipment()
-                                  } catch (error) {
-                                    console.error('Error updating status:', error)
-                                    alert('Failed to update status')
-                                  }
-                                }
-                              }}
-                              className={`group ${
-                                item.status === 'Active' 
-                                  ? 'hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300' 
-                                  : 'hover:bg-green-50 hover:text-green-600 hover:border-green-300'
-                              } transition-all duration-200 overflow-hidden`}
-                            >
-                              {item.status === 'Active' ? (
-                                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                              )}
-                              <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-200 group-hover:ml-2 whitespace-nowrap">
-                                {item.status === 'Active' ? 'Maintenance' : 'Activate'}
-                              </span>
-                            </Button>
+                            {/* Warranty Action Button */}
+                            {item.warranty_expires && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedEquipment(item)
+                                  setActionType('warranty')
+                                  setShowActionModal(true)
+                                }}
+                                className={`group ${
+                                  new Date(item.warranty_expires) < new Date()
+                                    ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100'
+                                    : new Date(item.warranty_expires).getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000
+                                    ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                                    : 'hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+                                } transition-all duration-200 overflow-hidden`}
+                                title={`Warranty expires: ${new Date(item.warranty_expires).toLocaleDateString('en-IN')}`}
+                              >
+                                <ShieldCheck className="h-4 w-4 flex-shrink-0" />
+                                <span className="max-w-0 group-hover:max-w-xs overflow-hidden transition-all duration-200 group-hover:ml-2 whitespace-nowrap">
+                                  {new Date(item.warranty_expires) < new Date() ? 'Expired' : 'Warranty'}
+                                </span>
+                              </Button>
+                            )}
 
                             {/* Edit Button */}
                             <Button
@@ -718,6 +724,21 @@ export default function EquipmentPage() {
           onEquipmentUpdated={() => {
             setShowEditModal(false)
             setSelectedEquipment(null)
+            refreshEquipment()
+          }}
+        />
+      )}
+
+      {/* Equipment Action Modal */}
+      {showActionModal && selectedEquipment && (
+        <EquipmentActionModal
+          equipment={selectedEquipment}
+          actionType={actionType}
+          onClose={() => {
+            setShowActionModal(false)
+            setSelectedEquipment(null)
+          }}
+          onSuccess={() => {
             refreshEquipment()
           }}
         />
