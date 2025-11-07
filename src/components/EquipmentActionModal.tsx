@@ -225,7 +225,7 @@ export default function EquipmentActionModal({
               
               {actionType === 'maintenance' ? (
                 <div className="space-y-2">
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-green-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -241,7 +241,7 @@ export default function EquipmentActionModal({
                     </div>
                   </label>
 
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-blue-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -257,7 +257,7 @@ export default function EquipmentActionModal({
                     </div>
                   </label>
 
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-yellow-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -275,7 +275,7 @@ export default function EquipmentActionModal({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-green-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -291,7 +291,7 @@ export default function EquipmentActionModal({
                     </div>
                   </label>
 
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-blue-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -307,7 +307,7 @@ export default function EquipmentActionModal({
                     </div>
                   </label>
 
-                  <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:border-gray-400 transition-colors bg-white">
                     <input
                       type="radio"
                       name="action"
@@ -328,7 +328,7 @@ export default function EquipmentActionModal({
 
             {/* Conditional Fields Based on Action */}
             {actionType === 'maintenance' && formData.action === 'completed' && (
-              <div className="space-y-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="space-y-4 p-4 bg-white border-2 border-green-200 rounded-lg">
                 <div className="space-y-2">
                   <Label htmlFor="maintenanceDays">Schedule Next Maintenance (Days)</Label>
                   <Input
@@ -347,7 +347,7 @@ export default function EquipmentActionModal({
             )}
 
             {actionType === 'maintenance' && formData.action === 'reschedule' && (
-              <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="space-y-4 p-4 bg-white border-2 border-blue-200 rounded-lg">
                 <div className="space-y-2">
                   <Label htmlFor="nextMaintenanceDate">New Maintenance Date</Label>
                   <Input
@@ -363,7 +363,7 @@ export default function EquipmentActionModal({
             )}
 
             {actionType === 'warranty' && formData.action === 'extend' && (
-              <div className="space-y-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="space-y-4 p-4 bg-white border-2 border-green-200 rounded-lg">
                 <div className="space-y-2">
                   <Label htmlFor="warrantyExtendDate">New Warranty Expiry Date</Label>
                   <Input
