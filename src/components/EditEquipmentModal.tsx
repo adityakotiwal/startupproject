@@ -11,7 +11,9 @@ import {
   Calendar, 
   IndianRupee,
   Settings,
-  Save
+  Save,
+  Package,
+  Tag
 } from 'lucide-react'
 
 interface Equipment {
@@ -111,45 +113,74 @@ export default function EditEquipmentModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <Settings className="h-6 w-6 text-blue-600" />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Edit Equipment</h2>
-              <p className="text-sm text-gray-500">Update equipment information</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header - Gradient like Maintenance/Warranty Modal */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <Settings className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Edit Equipment</h2>
+                <p className="text-blue-100">Update equipment information</p>
+              </div>
             </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Equipment Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Equipment Name *
-            </label>
-            <Input
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter equipment name"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit}>
+          <div className="p-6 space-y-6 bg-white">
+            {/* Current Equipment Info Card */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Current Equipment Details</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Equipment:</span>
+                  <p className="font-medium">{equipment.name}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Status:</span>
+                  <p className="font-medium">{equipment.status}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Category:</span>
+                  <p className="font-medium">{equipment.category}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Cost:</span>
+                  <p className="font-medium">₹{equipment.cost?.toLocaleString('en-IN') || '0'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Equipment Name */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Equipment Name *
+              </label>
+              <Input
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter equipment name"
+                required
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
           {/* Category and Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Category *
               </label>
               <select
                 value={formData.category}
@@ -166,9 +197,9 @@ export default function EditEquipmentModal({
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Status *
               </label>
               <select
                 value={formData.status}
@@ -186,8 +217,8 @@ export default function EditEquipmentModal({
 
           {/* Cost and Serial Number */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Cost (₹)
               </label>
               <div className="relative">
@@ -197,63 +228,67 @@ export default function EditEquipmentModal({
                   value={formData.cost}
                   onChange={(e) => handleInputChange('cost', e.target.value)}
                   placeholder="0"
-                  className="pl-10"
+                  className="pl-10 focus:ring-2 focus:ring-blue-500"
                   min="0"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Serial Number
               </label>
               <Input
                 value={formData.serial_number}
                 onChange={(e) => handleInputChange('serial_number', e.target.value)}
                 placeholder="Enter serial number"
+                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Purchase Date
               </label>
               <Input
                 type="date"
                 value={formData.purchase_date}
                 onChange={(e) => handleInputChange('purchase_date', e.target.value)}
+                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Maintenance Due
               </label>
               <Input
                 type="date"
                 value={formData.maintenance_due}
                 onChange={(e) => handleInputChange('maintenance_due', e.target.value)}
+                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Warranty Expires
               </label>
               <Input
                 type="date"
                 value={formData.warranty_expires}
                 onChange={(e) => handleInputChange('warranty_expires', e.target.value)}
+                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               Description
             </label>
             <textarea
@@ -266,24 +301,34 @@ export default function EditEquipmentModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Updating...' : 'Update Equipment'}
-            </Button>
+          <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              disabled={loading}
             >
               Cancel
             </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Equipment
+                </>
+              )}
+            </Button>
           </div>
+        </div>
         </form>
       </div>
     </div>
