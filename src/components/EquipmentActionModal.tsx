@@ -5,7 +5,6 @@ import { X, Wrench, ShieldCheck, CheckCircle, Calendar, FileText, AlertTriangle 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabaseClient'
 
 interface Equipment {
@@ -159,9 +158,9 @@ export default function EquipmentActionModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header - Gradient like Salary Modal */}
-        <div className={`text-white p-6 rounded-t-lg ${
+        <div className={`text-white p-6 rounded-t-xl ${
           actionType === 'maintenance' 
             ? 'bg-gradient-to-r from-orange-600 to-orange-700' 
             : 'bg-gradient-to-r from-blue-600 to-blue-700'
@@ -196,7 +195,7 @@ export default function EquipmentActionModal({
         </div>
 
         <form onSubmit={handleSubmit}>
-          <CardContent className="p-6 space-y-6">
+          <div className="p-6 space-y-6 bg-white">
             {/* Current Status */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3">Current Status</h3>
@@ -432,9 +431,9 @@ export default function EquipmentActionModal({
                 )}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }
