@@ -29,7 +29,7 @@ export default function SignUpPage() {
     setError('')
 
     // TEMPORARY: Secret code validation - Remove this later for production
-    if (secretCode !== 'aditya') {
+    if (secretCode !== 'Aditya') {
       setError('Invalid secret code. Please contact the administrator.')
       return
     }
