@@ -28,8 +28,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import AppHeader from '@/components/AppHeader'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import {
   LineChart,
@@ -291,22 +290,19 @@ export default function AnalyticsPage() {
 
   if (!isClient) {
     return (
-      <ProtectedRoute>
+      <ProtectedPage>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-          <AppHeader />
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">Loading Analytics...</div>
           </main>
         </div>
-      </ProtectedRoute>
+      </ProtectedPage>
     )
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader onRefresh={processAnalyticsData} isRefreshing={loading} />
-
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header */}
           <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-8 text-white shadow-2xl">
@@ -727,6 +723,6 @@ export default function AnalyticsPage() {
           )}
         </main>
       </div>
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

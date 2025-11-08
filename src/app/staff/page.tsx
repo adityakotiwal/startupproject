@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Filter, Download, Users, Phone, Mail, Briefcase, IndianRupee, Edit, DollarSign, Activity, UserX, History, Wallet } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import Link from 'next/link'
 import StaffDetailsModal from '@/components/StaffDetailsModal'
@@ -22,7 +22,6 @@ import StaffAdvancedFiltersModal from '@/components/StaffAdvancedFiltersModal'
 import PhotoZoomModal from '@/components/PhotoZoomModal'
 import RecordSalaryPaymentModal from '@/components/RecordSalaryPaymentModal'
 import SalaryHistoryModal from '@/components/SalaryHistoryModal'
-import AppHeader from '@/components/AppHeader'
 import { exportStaffToCSV, exportStaffWithAnalytics } from '@/lib/staffCsvExport'
 
 // Staff interface - using individual columns (Option 2)
@@ -234,13 +233,8 @@ export default function StaffPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader 
-          onRefresh={refreshStaff}
-          isRefreshing={loading}
-        />
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header with Gradient */}
           <div className="mb-8 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
@@ -888,6 +882,6 @@ export default function StaffPage() {
           }}
         />
       )}
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

@@ -11,8 +11,7 @@ import {
   UserPlus, CreditCard, Wrench, Star, Bell, Search, Filter,
   CheckCircle, XCircle, AlertCircle, TrendingDown
 } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import AppHeader from '@/components/AppHeader'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import { useGymContext } from '@/hooks/useGymContext'
 import { useMembers, useStaff, useEquipment, usePayments, useInvalidateQueries, useFocusRehydration } from '@/hooks/useOptimizedData'
@@ -117,7 +116,7 @@ export default function Dashboard() {
   // Don't render interactive elements until client-side hydration is complete
   if (!isClient) {
     return (
-      <ProtectedRoute>
+      <ProtectedPage>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
           <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,18 +142,13 @@ export default function Dashboard() {
             </div>
           </main>
         </div>
-      </ProtectedRoute>
+      </ProtectedPage>
     )
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader 
-          onRefresh={refreshDashboard}
-          isRefreshing={stats.loading}
-        />
-
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Hero Section */}
@@ -480,6 +474,6 @@ export default function Dashboard() {
           </Card>
         </main>
       </div>
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

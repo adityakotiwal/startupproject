@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
 import { useWorkoutTemplates, useWorkoutAnalytics } from '@/hooks/useWorkoutPlans'
-import ProtectedRoute from '@/components/ProtectedRoute'
+import ProtectedPage from '@/components/ProtectedPage'
 import { 
   Dumbbell, Plus, Search, Filter, TrendingUp, Users, 
   Award, Target, Calendar, MoreVertical, Edit, Trash2, 
@@ -60,58 +60,8 @@ export default function WorkoutPlansPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard">
-                  <div className="flex items-center space-x-2 cursor-pointer group">
-                    <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg group-hover:scale-110 transition-transform">
-                      <Dumbbell className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold text-gray-900">
-                        {currentGym?.name || 'GymSync Pro'}
-                      </h1>
-                      <p className="text-xs text-gray-500">Workout Plans</p>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-
-              {/* Navigation */}
-              <nav className="hidden md:flex space-x-1">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-all">
-                  Dashboard
-                </Link>
-                <Link href="/members" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-all">
-                  Members
-                </Link>
-                <Link href="/workout-plans" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                  Workout Plans
-                </Link>
-                <Link href="/analytics" className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition-all">
-                  Analytics
-                </Link>
-              </nav>
-
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={signOut}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Page Header with Stats */}
           <div className="mb-8">
@@ -402,6 +352,6 @@ export default function WorkoutPlansPage() {
           )}
         </main>
       </div>
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

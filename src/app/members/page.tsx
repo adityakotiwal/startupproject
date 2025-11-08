@@ -10,8 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Filter, Download, Users, Phone, Mail, Dumbbell, Eye, CreditCard, Edit, UserX, RefreshCw } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import AppHeader from '@/components/AppHeader'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import Link from 'next/link'
 import MemberDetailsModal from '@/components/MemberDetailsModal'
@@ -301,13 +300,8 @@ export default function MembersPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader 
-          onRefresh={handleRefresh}
-          isRefreshing={isLoading}
-        />
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header with Gradient */}
           <div className="mb-8 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-8 shadow-2xl">
@@ -862,6 +856,6 @@ export default function MembersPage() {
           memberName={zoomMemberName}
         />
       </div>
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

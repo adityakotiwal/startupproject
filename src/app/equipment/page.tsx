@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Filter, Download, Wrench, IndianRupee, Calendar, Settings, Eye, Dumbbell, TrendingUp, AlertTriangle, CheckCircle, Edit, Trash2, Clock, RotateCcw, ShieldAlert, ShieldCheck } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import AppHeader from '@/components/AppHeader'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import Link from 'next/link'
 import { exportEquipmentWithAnalytics } from '@/lib/equipmentCsvExport'
@@ -280,13 +279,8 @@ export default function EquipmentPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader 
-          onRefresh={refreshEquipment}
-          isRefreshing={loading}
-        />
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header with Gradient */}
           <div className="mb-8 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-500 p-8 shadow-2xl">
@@ -749,6 +743,6 @@ export default function EquipmentPage() {
         onClose={() => setShowAdvancedFilters(false)}
         onApplyFilters={handleApplyAdvancedFilters}
       />
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }

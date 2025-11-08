@@ -30,8 +30,7 @@ import {
   Repeat,
   FileDown
 } from 'lucide-react'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import AppHeader from '@/components/AppHeader'
+import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -242,13 +241,8 @@ export default function ExpensesPage() {
   }).reduce((sum, expense) => sum + expense.amount, 0)
 
   return (
-    <ProtectedRoute>
+    <ProtectedPage>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <AppHeader 
-          onRefresh={refreshExpenses}
-          isRefreshing={loading}
-        />
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header with Gradient */}
           <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-600 via-orange-600 to-red-700 p-8 shadow-2xl">
@@ -665,6 +659,6 @@ Generated: ${new Date().toLocaleString('en-IN')}
           />
         )}
       </div>
-    </ProtectedRoute>
+    </ProtectedPage>
   )
 }
