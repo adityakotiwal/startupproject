@@ -3,19 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
 import { Button } from '@/components/ui/button'
-import { 
-  Dumbbell, 
-  LogOut, 
-  Activity, 
-  LayoutDashboard,
-  Users,
-  UserCheck,
-  CreditCard,
-  ClipboardList,
-  TrendingUp,
-  Wrench,
-  Receipt
-} from 'lucide-react'
+import { Dumbbell, LogOut, Activity } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import NotificationPanel from '@/components/NotificationPanel'
@@ -42,17 +30,16 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
     return pathname === path
   }
 
-  // Reorganized navigation with icons for better UX
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/members', label: 'Members', icon: Users },
-    { href: '/membership-plans', label: 'Plans', icon: ClipboardList },
-    { href: '/workout-plans', label: 'Workouts', icon: Dumbbell },
-    { href: '/staff', label: 'Staff', icon: UserCheck },
-    { href: '/payments', label: 'Payments', icon: CreditCard },
-    { href: '/expenses', label: 'Expenses', icon: Receipt },
-    { href: '/equipment', label: 'Equipment', icon: Wrench },
-    { href: '/analytics', label: 'Analytics', icon: TrendingUp },
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/members', label: 'Members' },
+    { href: '/staff', label: 'Staff' },
+    { href: '/equipment', label: 'Equipment' },
+    { href: '/membership-plans', label: 'Plans' },
+    { href: '/workout-plans', label: 'Workouts' },
+    { href: '/expenses', label: 'Expenses' },
+    { href: '/payments', label: 'Payments' },
+    { href: '/analytics', label: 'Analytics' },
   ]
 
   return (
@@ -72,25 +59,21 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
               </div>
             </Link>
             
-            {/* Enhanced Navigation Menu with Icons */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`group flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 ${isActive(item.href) ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'}`} />
-                    <span>{item.label}</span>
-                  </Link>
-                )
-              })}
+            {/* Navigation Menu - prefetch removed to prevent site freeze */}
+            <nav className="hidden md:flex space-x-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    isActive(item.href)
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
           
@@ -126,53 +109,6 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
-          </div>
-        </div>
-
-        {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-          <div className="grid grid-cols-5 gap-1 px-2 py-2">
-            {navItems.slice(0, 5).map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 ${isActive(item.href) ? 'text-white' : 'text-gray-500'}`} />
-                  <span className={`text-xs mt-1 font-medium ${isActive(item.href) ? 'text-white' : 'text-gray-600'}`}>
-                    {item.label}
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
-          {/* Secondary Mobile Nav */}
-          <div className="grid grid-cols-4 gap-1 px-2 pb-2">
-            {navItems.slice(5).map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 ${isActive(item.href) ? 'text-white' : 'text-gray-500'}`} />
-                  <span className={`text-xs mt-1 font-medium ${isActive(item.href) ? 'text-white' : 'text-gray-600'}`}>
-                    {item.label}
-                  </span>
-                </Link>
-              )
-            })}
           </div>
         </div>
       </div>
