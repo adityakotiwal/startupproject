@@ -36,6 +36,7 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
     { href: '/staff', label: 'Staff' },
     { href: '/equipment', label: 'Equipment' },
     { href: '/membership-plans', label: 'Plans' },
+    { href: '/workout-plans', label: 'Workouts' },
     { href: '/expenses', label: 'Expenses' },
     { href: '/payments', label: 'Payments' },
     { href: '/analytics', label: 'Analytics' },

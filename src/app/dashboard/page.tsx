@@ -460,11 +460,11 @@ export default function Dashboard() {
                   </div>
                 </Link>
                 
-                <Link href="/equipment" className="group">
-                  <div className="p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all group-hover:shadow-md">
-                    <Wrench className="h-8 w-8 text-purple-600 mb-2" />
-                    <p className="font-medium text-gray-900">Manage Equipment</p>
-                    <p className="text-xs text-gray-500">Track maintenance</p>
+                <Link href="/workout-plans" className="group">
+                  <div className="p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all group-hover:shadow-md">
+                    <Dumbbell className="h-8 w-8 text-orange-600 mb-2" />
+                    <p className="font-medium text-gray-900">Workout Plans</p>
+                    <p className="text-xs text-gray-500">Create training programs</p>
                   </div>
                 </Link>
                 
