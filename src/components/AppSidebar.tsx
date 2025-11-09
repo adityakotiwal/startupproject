@@ -91,68 +91,6 @@ export default function AppSidebar() {
           </div>
         </div>
 
-        {/* Sidebar Control Button */}
-        <div className="px-4 py-3 border-b border-gray-200 relative">
-          <button
-            onClick={() => setShowControlMenu(!showControlMenu)}
-            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors group ${shouldShowExpanded ? '' : 'justify-center'}`}
-          >
-            <Menu className="h-5 w-5 text-gray-700 flex-shrink-0" />
-            {shouldShowExpanded && (
-              <span className="text-sm text-gray-700 whitespace-nowrap">Sidebar control</span>
-            )}
-            {/* Tooltip for collapsed state */}
-            {!shouldShowExpanded && (
-              <div className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                Sidebar control
-              </div>
-            )}
-          </button>
-
-          {/* Control Menu Dropdown */}
-          {showControlMenu && (
-            <div className={`absolute ${shouldShowExpanded ? 'left-4' : 'left-20'} top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl py-2 w-48 z-50`}>
-              <button
-                onClick={() => {
-                  setState('expanded')
-                  setShowControlMenu(false)
-                }}
-                className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center space-x-2 ${
-                  state === 'expanded' ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <div className="w-2 h-2 rounded-full bg-current" />
-                <span>Expanded</span>
-              </button>
-              <button
-                onClick={() => {
-                  setState('collapsed')
-                  setShowControlMenu(false)
-                  setIsHovered(false)
-                }}
-                className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center space-x-2 ${
-                  state === 'collapsed' ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <div className="w-2 h-2 rounded-full bg-current" />
-                <span>Collapsed</span>
-              </button>
-              <button
-                onClick={() => {
-                  setState('hover')
-                  setShowControlMenu(false)
-                }}
-                className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center space-x-2 ${
-                  state === 'hover' ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <div className="w-2 h-2 rounded-full bg-current" />
-                <span>Expand on hover</span>
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {navItems.map((item) => {
@@ -183,6 +121,82 @@ export default function AppSidebar() {
             )
           })}
         </nav>
+
+        {/* Sidebar Control at Bottom */}
+        <div className="border-t border-gray-200 relative">
+          <button
+            onClick={() => setShowControlMenu(!showControlMenu)}
+            className={`w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 transition-colors group ${
+              shouldShowExpanded ? '' : 'justify-center'
+            }`}
+          >
+            <Menu className="h-5 w-5 text-gray-600 flex-shrink-0" />
+            {shouldShowExpanded && (
+              <span className="text-sm text-gray-600 whitespace-nowrap">Sidebar control</span>
+            )}
+            {/* Tooltip for collapsed state */}
+            {!shouldShowExpanded && (
+              <div className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                Sidebar control
+              </div>
+            )}
+          </button>
+
+          {/* Control Menu Dropdown - Opens upward from bottom */}
+          {showControlMenu && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowControlMenu(false)}
+              />
+              
+              {/* Menu */}
+              <div className={`absolute ${shouldShowExpanded ? 'left-4' : 'left-20'} bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-xl py-2 w-56 z-50`}>
+                <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sidebar control
+                </div>
+                <button
+                  onClick={() => {
+                    setState('expanded')
+                    setShowControlMenu(false)
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 transition-colors flex items-center space-x-3 ${
+                    state === 'expanded' ? 'text-gray-900 bg-gray-100 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${state === 'expanded' ? 'bg-gray-900' : 'bg-gray-400'}`} />
+                  <span>Expanded</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setState('collapsed')
+                    setShowControlMenu(false)
+                    setIsHovered(false)
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 transition-colors flex items-center space-x-3 ${
+                    state === 'collapsed' ? 'text-gray-900 bg-gray-100 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${state === 'collapsed' ? 'bg-gray-900' : 'bg-gray-400'}`} />
+                  <span>Collapsed</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setState('hover')
+                    setShowControlMenu(false)
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 transition-colors flex items-center space-x-3 ${
+                    state === 'hover' ? 'text-gray-900 bg-gray-100 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${state === 'hover' ? 'bg-gray-900' : 'bg-gray-400'}`} />
+                  <span>Expand on hover</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
       </aside>
     </>
