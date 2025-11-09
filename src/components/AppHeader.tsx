@@ -39,15 +39,29 @@ export default function AppHeader() {
         {/* Left: Logo and Name */}
         <div className="flex items-center space-x-3">
           <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md">
               <Dumbbell className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">
+            <div className="flex flex-col">
+              <h1 className="text-lg font-bold text-gray-900 leading-tight">
                 GymSync Pro
               </h1>
+              {currentGym?.name && (
+                <p className="text-xs text-gray-500 font-medium">
+                  {currentGym.name}
+                </p>
+              )}
             </div>
           </Link>
+          
+          {/* Gym Name Badge - Alternative display on larger screens */}
+          {currentGym?.name && (
+            <div className="hidden lg:flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+              <span className="text-xs font-semibold text-blue-700">
+                🏋️ {currentGym.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right: Notifications and Profile */}
