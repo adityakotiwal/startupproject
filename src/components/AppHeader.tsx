@@ -44,7 +44,7 @@ export default function AppHeader() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">
-                {currentGym?.name || 'GymSync Pro'}
+                GymSync Pro
               </h1>
             </div>
           </Link>

@@ -244,8 +244,8 @@ ${gymName} Management`
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Panel - positioned to open to the right from sidebar */}
-          <div className="absolute left-0 mt-2 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 z-50 flex flex-col">
+          {/* Panel - positioned to open downward and to the right, stays within viewport */}
+          <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] max-h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 z-50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-purple-600">
               <div className="flex items-center space-x-2">
