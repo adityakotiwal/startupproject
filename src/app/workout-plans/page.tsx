@@ -3,8 +3,9 @@
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/contexts/GymContext'
-import { useWorkoutTemplates, useWorkoutAnalytics } from '@/hooks/useWorkoutPlans'
+import { useWorkoutTemplates, useWorkoutAnalytics, useCreateWorkoutTemplate } from '@/hooks/useWorkoutPlans'
 import ProtectedPage from '@/components/ProtectedPage'
+import { useRouter } from 'next/navigation'
 import { 
   Dumbbell, Plus, Search, Filter, TrendingUp, Users, 
   Award, Target, Calendar, MoreVertical, Edit, Trash2, 
@@ -17,10 +18,12 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function WorkoutPlansPage() {
+  const router = useRouter()
   const { user, signOut } = useAuth()
   const { currentGym, gymId } = useGymContext()
   const { data: templates = [], isPending: loadingTemplates } = useWorkoutTemplates(gymId)
   const { data: analytics } = useWorkoutAnalytics(gymId)
+  const createTemplate = useCreateWorkoutTemplate()
   
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDifficulty, setFilterDifficulty] = useState('All')
@@ -28,6 +31,53 @@ export default function WorkoutPlansPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  
+  // Form states for creating workout plan
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    duration_weeks: 4,
+    difficulty_level: 'Intermediate',
+    category: 'Strength',
+  })
+  const [isCreating, setIsCreating] = useState(false)
+  
+  // Handle form submission
+  const handleCreateWorkout = async () => {
+    if (!gymId || !formData.name.trim()) {
+      alert('Please provide a workout plan name')
+      return
+    }
+    
+    setIsCreating(true)
+    try {
+      await createTemplate.mutateAsync({
+        gym_id: gymId,
+        name: formData.name,
+        description: formData.description,
+        duration_weeks: formData.duration_weeks,
+        difficulty_level: formData.difficulty_level,
+        category: formData.category,
+        is_active: true,
+        created_by: user?.id,
+      })
+      
+      // Reset form and close modal
+      setFormData({
+        name: '',
+        description: '',
+        duration_weeks: 4,
+        difficulty_level: 'Intermediate',
+        category: 'Strength',
+      })
+      setShowCreateModal(false)
+    } catch (error) {
+      console.error('Error creating workout plan:', error)
+      alert('Failed to create workout plan. Please try again.')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
@@ -351,6 +401,187 @@ export default function WorkoutPlansPage() {
             </div>
           )}
         </main>
+
+        {/* Create Workout Plan Modal */}
+        <AnimatePresence>
+          {showCreateModal && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !isCreating && setShowCreateModal(false)}
+                className="fixed inset-0 bg-black bg-opacity-50 z-50"
+              />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-t-2xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                          <Dumbbell className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-white">Create Workout Plan</h3>
+                          <p className="text-blue-100 text-sm">Build a custom workout routine</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => !isCreating && setShowCreateModal(false)}
+                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                        disabled={isCreating}
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Form Content */}
+                  <div className="p-6 space-y-6">
+                    {/* Plan Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Workout Plan Name <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Beginner Full Body Strength"
+                        className="w-full"
+                        disabled={isCreating}
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Describe the workout plan goals, target audience, and what to expect..."
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={isCreating}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Duration */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Duration (weeks)
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="52"
+                          value={formData.duration_weeks}
+                          onChange={(e) => setFormData({ ...formData, duration_weeks: parseInt(e.target.value) || 4 })}
+                          className="w-full"
+                          disabled={isCreating}
+                        />
+                      </div>
+
+                      {/* Difficulty Level */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Difficulty
+                        </label>
+                        <select
+                          value={formData.difficulty_level}
+                          onChange={(e) => setFormData({ ...formData, difficulty_level: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          disabled={isCreating}
+                        >
+                          <option value="Beginner">Beginner</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                        </select>
+                      </div>
+
+                      {/* Category */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Category
+                        </label>
+                        <select
+                          value={formData.category}
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          disabled={isCreating}
+                        >
+                          <option value="Strength">Strength</option>
+                          <option value="Cardio">Cardio</option>
+                          <option value="Hypertrophy">Hypertrophy</option>
+                          <option value="Fat Loss">Fat Loss</option>
+                          <option value="Endurance">Endurance</option>
+                          <option value="Flexibility">Flexibility</option>
+                          <option value="CrossFit">CrossFit</option>
+                          <option value="Powerlifting">Powerlifting</option>
+                          <option value="Bodybuilding">Bodybuilding</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Info Box */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        <Target className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-semibold mb-1">Next Step: Add Exercises</p>
+                          <p>After creating this plan, you'll be able to add exercises for each day of the week.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-end space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCreateModal(false)}
+                      disabled={isCreating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateWorkout}
+                      disabled={isCreating || !formData.name.trim()}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    >
+                      {isCreating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Workout Plan
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </ProtectedPage>
   )
