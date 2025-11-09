@@ -1,22 +1,29 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/hooks/useGymContext'
-import { Button } from '@/components/ui/button'
-import { Dumbbell, LogOut, Activity } from 'lucide-react'
+import { Settings, LogOut, ChevronDown, Dumbbell } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import NotificationPanel from '@/components/NotificationPanel'
+import NotificationPanel from './NotificationPanel'
 
-interface AppHeaderProps {
-  onRefresh?: () => void
-  isRefreshing?: boolean
-}
-
-export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeaderProps) {
+export default function AppHeader() {
   const { user, signOut } = useAuth()
-  const { gymId } = useGymContext()
-  const pathname = usePathname()
+  const { currentGym } = useGymContext()
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -26,89 +33,102 @@ export default function AppHeader({ onRefresh, isRefreshing = false }: AppHeader
     }
   }
 
-  const isActive = (path: string) => {
-    return pathname === path
-  }
-
-  const navItems = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/members', label: 'Members' },
-    { href: '/staff', label: 'Staff' },
-    { href: '/equipment', label: 'Equipment' },
-    { href: '/membership-plans', label: 'Plans' },
-    { href: '/workout-plans', label: 'Workouts' },
-    { href: '/expenses', label: 'Expenses' },
-    { href: '/payments', label: 'Payments' },
-    { href: '/analytics', label: 'Analytics' },
-  ]
-
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-8">
-            <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
-                <Dumbbell className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  GymSync Pro
-                </h1>
-                <p className="text-xs text-gray-500">Gym Management Suite</p>
-              </div>
-            </Link>
-            
-            {/* Navigation Menu - prefetch removed to prevent site freeze */}
-            <nav className="hidden md:flex space-x-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isActive(item.href)
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {onRefresh && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-2 hover:bg-blue-100 transition-colors"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-              >
-                <Activity className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
-            )}
-            <NotificationPanel />
-            <Link href="/settings" className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors cursor-pointer">
+    <header className="fixed top-0 right-0 left-0 h-16 bg-white border-b border-gray-200 z-50">
+      <div className="h-full px-6 flex items-center justify-between">
+        {/* Left: Logo and Name */}
+        <div className="flex items-center space-x-3">
+          <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+              <Dumbbell className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">
+                {currentGym?.name || 'GymSync Pro'}
+              </h1>
+            </div>
+          </Link>
+        </div>
+
+        {/* Right: Notifications and Profile */}
+        <div className="flex items-center space-x-4">
+          {/* Notification Bell */}
+          <NotificationPanel />
+
+          {/* Profile Dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors"
+            >
+              {/* Profile Circle */}
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">
                   {(user?.name || user?.full_name || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm text-gray-700 font-medium hidden lg:block">
-                {user?.name || user?.full_name}
-              </span>
-            </Link>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSignOut}
-              className="border-gray-300 hover:bg-gray-50"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+              
+              {/* User Name and Email - Hidden on small screens */}
+              <div className="hidden md:block text-left">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
+                  {user?.name || user?.full_name || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                  {user?.email}
+                </p>
+              </div>
+
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showProfileMenu && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowProfileMenu(false)}
+                />
+
+                {/* Menu */}
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 py-2">
+                  {/* User Info - Visible on mobile */}
+                  <div className="md:hidden px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.name || user?.full_name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+
+                  {/* Settings */}
+                  <Link
+                    href="/settings"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </Link>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 my-2" />
+
+                  {/* Sign Out */}
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false)
+                      handleSignOut()
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

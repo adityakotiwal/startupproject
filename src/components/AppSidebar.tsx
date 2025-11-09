@@ -1,13 +1,8 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
-import { useGymContext } from '@/hooks/useGymContext'
 import { useSidebar } from '@/contexts/SidebarContext'
-import { Button } from '@/components/ui/button'
 import {
   Dumbbell,
-  LogOut,
-  Activity,
   Home,
   Users,
   UserCog,
@@ -18,13 +13,10 @@ import {
   Wallet,
   BarChart3,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Menu,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import NotificationPanel from '@/components/NotificationPanel'
 import { useState } from 'react'
 
 interface NavItem {
@@ -34,20 +26,10 @@ interface NavItem {
 }
 
 export default function AppSidebar() {
-  const { user, signOut } = useAuth()
-  const { gymId } = useGymContext()
   const pathname = usePathname()
-  const { state, setState, isExpanded } = useSidebar()
+  const { state, setState } = useSidebar()
   const [isHovered, setIsHovered] = useState(false)
   const [showControlMenu, setShowControlMenu] = useState(false)
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   const isActive = (path: string) => {
     return pathname === path
@@ -63,6 +45,7 @@ export default function AppSidebar() {
     { href: '/expenses', label: 'Expenses', icon: DollarSign },
     { href: '/payments', label: 'Payments', icon: Wallet },
     { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/settings', label: 'Settings', icon: Settings },
   ]
 
   // Calculate if sidebar should be visually expanded
@@ -201,68 +184,6 @@ export default function AppSidebar() {
           })}
         </nav>
 
-        {/* Bottom Section */}
-        <div className="border-t border-gray-200 p-4 space-y-3">
-          {/* Notifications */}
-          <div className={`flex items-center ${shouldShowExpanded ? 'justify-start' : 'justify-center'}`}>
-            <NotificationPanel />
-          </div>
-
-          {/* Settings Link */}
-          <Link
-            href="/settings"
-            className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all group relative ${
-              isActive('/settings')
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
-                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-            }`}
-          >
-            <Settings className="h-5 w-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm font-medium">Settings</span>}
-            {!shouldShowExpanded && (
-              <div className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                Settings
-              </div>
-            )}
-          </Link>
-
-          {/* User Profile */}
-          <div
-            className={`flex items-center space-x-3 px-3 py-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 ${
-              shouldShowExpanded ? '' : 'justify-center'
-            }`}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm font-bold">
-                {(user?.name || user?.full_name || 'U').charAt(0).toUpperCase()}
-              </span>
-            </div>
-            {shouldShowExpanded && (
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm text-gray-900 font-medium truncate">
-                  {user?.name || user?.full_name}
-                </p>
-                <p className="text-xs text-gray-600 truncate">{user?.email}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Sign Out Button */}
-          <button
-            onClick={handleSignOut}
-            className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all border border-red-200 group relative ${
-              shouldShowExpanded ? '' : 'justify-center'
-            }`}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm font-medium">Sign Out</span>}
-            {!shouldShowExpanded && (
-              <div className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                Sign Out
-              </div>
-            )}
-          </button>
-        </div>
       </aside>
     </>
   )
