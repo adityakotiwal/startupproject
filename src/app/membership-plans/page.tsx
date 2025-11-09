@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/contexts/AuthContext'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { useMembershipPlans } from '@/hooks/useOptimizedData'
 import { useNavigationTimeout } from '@/hooks/useNavigationTimeout'
 import { Button } from '@/components/ui/button'

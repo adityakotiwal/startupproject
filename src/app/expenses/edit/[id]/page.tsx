@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { callApi } from '@/lib/apiClient'
 
 interface Expense {

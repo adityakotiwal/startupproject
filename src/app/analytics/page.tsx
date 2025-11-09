@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useMembers, usePayments, useExpenses, useMembershipPlans } from '@/hooks/useOptimizedData'
 import { Button } from '@/components/ui/button'

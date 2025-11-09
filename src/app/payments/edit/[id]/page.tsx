@@ -26,7 +26,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useClientOnly } from '@/hooks/useClientOnly'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 
 interface Payment {
   id: string

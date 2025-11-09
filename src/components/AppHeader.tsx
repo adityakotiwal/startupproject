@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { Settings, LogOut, ChevronDown, Dumbbell } from 'lucide-react'
 import Link from 'next/link'
 import NotificationPanel from './NotificationPanel'
@@ -42,21 +42,14 @@ export default function AppHeader() {
             <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-md">
               <Dumbbell className="h-5 w-5 text-white" />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">
-                GymSync Pro
-              </h1>
-              {currentGym?.name && (
-                <p className="text-xs text-gray-500 font-medium">
-                  {currentGym.name}
-                </p>
-              )}
-            </div>
+            <h1 className="text-lg font-bold text-gray-900">
+              GymSync Pro
+            </h1>
           </Link>
           
-          {/* Gym Name Badge - Alternative display on larger screens */}
+          {/* Gym Name Badge */}
           {currentGym?.name && (
-            <div className="hidden lg:flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
               <span className="text-xs font-semibold text-blue-700">
                 🏋️ {currentGym.name}
               </span>

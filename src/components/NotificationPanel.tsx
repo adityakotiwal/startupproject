@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getNotifications, getNotificationCount, type Notification } from '@/lib/notifications'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { generateBirthdayWish, generateRenewalReminder, generateFeeDueNotification } from '@/lib/whatsapp-templates'
 import { supabase } from '@/lib/supabaseClient'
 

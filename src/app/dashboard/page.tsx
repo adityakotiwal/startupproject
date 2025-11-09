@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { useMembers, useStaff, useEquipment, usePayments, useInvalidateQueries, useFocusRehydration } from '@/hooks/useOptimizedData'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'

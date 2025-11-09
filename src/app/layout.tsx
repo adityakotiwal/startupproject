@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { SidebarProvider } from '@/contexts/SidebarContext'
+import { GymProvider } from '@/contexts/GymContext'
 import MUIProvider from '@/components/providers/MUIProvider'
 import { QueryProvider } from '@/components/QueryProvider'
 import DevGuards from '@/components/DevGuards'
@@ -26,9 +27,11 @@ export default function RootLayout({
         <QueryProvider>
           <MUIProvider>
             <AuthProvider>
-              <SidebarProvider>
-                {children}
-              </SidebarProvider>
+              <GymProvider>
+                <SidebarProvider>
+                  {children}
+                </SidebarProvider>
+              </GymProvider>
             </AuthProvider>
           </MUIProvider>
         </QueryProvider>

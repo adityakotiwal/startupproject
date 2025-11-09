@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useGymContext } from '@/hooks/useGymContext'
+import { useGymContext } from '@/contexts/GymContext'
 import { useWorkoutTemplates, useWorkoutAnalytics } from '@/hooks/useWorkoutPlans'
 import ProtectedPage from '@/components/ProtectedPage'
 import { 
