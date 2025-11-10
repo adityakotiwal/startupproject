@@ -259,10 +259,10 @@ export default function WorkoutPlanDetailPage() {
   if (loadingTemplate) {
     return (
       <ProtectedPage>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading workout plan...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 text-lg font-medium">Loading workout plan...</p>
           </div>
         </div>
       </ProtectedPage>
@@ -272,13 +272,21 @@ export default function WorkoutPlanDetailPage() {
   if (!template) {
     return (
       <ProtectedPage>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600">Workout plan not found</p>
-            <Button onClick={() => router.push('/workout-plans')} className="mt-4">
-              Back to Workout Plans
-            </Button>
-          </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Card className="max-w-md w-full shadow-xl">
+            <CardContent className="p-8 text-center">
+              <Dumbbell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Workout Plan Not Found</h2>
+              <p className="text-gray-600 mb-6">The workout plan you're looking for doesn't exist or has been deleted.</p>
+              <Button 
+                onClick={() => router.push('/workout-plans')} 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Workout Plans
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </ProtectedPage>
     )
@@ -286,20 +294,21 @@ export default function WorkoutPlanDetailPage() {
 
   return (
     <ProtectedPage>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            onClick={() => router.push('/workout-plans')}
+            className="mb-6 bg-white hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Workout Plans
+          </Button>
+
           {/* Header */}
           <div className="mb-8">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/workout-plans')}
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Workout Plans
-            </Button>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
               <CardContent className="p-6">
                 {isEditing ? (
                   <div className="space-y-4">
@@ -375,16 +384,25 @@ export default function WorkoutPlanDetailPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button onClick={() => setIsEditing(true)} className="bg-white text-blue-600 hover:bg-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          onClick={() => setIsEditing(true)} 
+                          className="bg-white text-blue-600 hover:bg-blue-50 shadow-md font-semibold"
+                        >
                           <Edit className="h-4 w-4 mr-2" />
-                          Edit
+                          Edit Plan
                         </Button>
-                        <Button onClick={handleDuplicateTemplate} className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-30">
+                        <Button 
+                          onClick={handleDuplicateTemplate} 
+                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-md font-semibold"
+                        >
                           <Copy className="h-4 w-4 mr-2" />
                           Duplicate
                         </Button>
-                        <Button onClick={handleDeleteTemplate} className="bg-red-500 text-white hover:bg-red-600">
+                        <Button 
+                          onClick={handleDeleteTemplate} 
+                          className="bg-red-500 hover:bg-red-600 text-white shadow-md font-semibold"
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
                         </Button>

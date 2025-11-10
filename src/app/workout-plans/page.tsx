@@ -54,14 +54,21 @@ export default function WorkoutPlansPage() {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id, first_name, last_name, email, membership_status')
+        .select('id, first_name, last_name, email, membership_status, photo_url')
         .eq('gym_id', gymId)
+        .eq('membership_status', 'Active')
         .order('first_name', { ascending: true })
       
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching members:', error)
+        setMembers([])
+        return
+      }
       setMembers(data || [])
+      console.log('Fetched members:', data?.length || 0)
     } catch (error) {
       console.error('Error fetching members:', error)
+      setMembers([])
     }
   }
 
@@ -184,91 +191,123 @@ export default function WorkoutPlansPage() {
 
   return (
     <ProtectedPage>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Page Header with Stats */}
+          {/* Hero Banner - Equipment Style */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-                  <div className="p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
-                    <Dumbbell className="h-8 w-8 text-white" />
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl shadow-2xl overflow-hidden">
+              <div className="px-8 py-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Dumbbell className="h-10 w-10 text-white" />
+                      <h1 className="text-4xl font-bold text-white">Workout Plans</h1>
+                    </div>
+                    <p className="text-blue-100 text-lg mb-4">
+                      Create, manage, and assign workout routines to your members
+                    </p>
+                    <div className="flex items-center space-x-6 text-white text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Target className="h-4 w-4" />
+                        <span>Plan Builder</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>Progress Tracking</span>
+                      </div>
+                    </div>
                   </div>
-                  <span>Workout Plans</span>
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Create, manage, and assign workout routines to your members
-                </p>
+                  <div className="hidden md:block">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6">
+                      <Dumbbell className="h-16 w-16 text-white" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create Workout Plan
-              </Button>
             </div>
+          </div>
 
-            {/* Analytics Cards */}
-            {analytics && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-blue-700 font-medium">Total Templates</p>
-                        <h3 className="text-3xl font-bold text-blue-900 mt-1">{analytics.totalTemplates}</h3>
-                      </div>
-                      <div className="p-3 bg-blue-600 rounded-lg">
-                        <Target className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Stats Cards with Blue/Purple Theme */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium">Total Templates</p>
+                    <p className="text-3xl font-bold text-white mb-1">
+                      {analytics?.totalTemplates || templates.length}
+                    </p>
+                    <p className="text-blue-100 text-xs">{templates.filter(t => t.is_active).length} active</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-green-700 font-medium">Active Assignments</p>
-                        <h3 className="text-3xl font-bold text-green-900 mt-1">{analytics.activePlans}</h3>
-                      </div>
-                      <div className="p-3 bg-green-600 rounded-lg">
-                        <Users className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <Card className="border-0 bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm font-medium">Active Assignments</p>
+                    <p className="text-3xl font-bold text-white mb-1">
+                      {analytics?.activePlans || 0}
+                    </p>
+                    <p className="text-green-100 text-xs">{analytics?.totalAssignments || 0} total</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-purple-100">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-purple-700 font-medium">Completion Rate</p>
-                        <h3 className="text-3xl font-bold text-purple-900 mt-1">{analytics.avgCompletionRate}%</h3>
-                      </div>
-                      <div className="p-3 bg-purple-600 rounded-lg">
-                        <Award className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <Card className="border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm font-medium">Completion Rate</p>
+                    <p className="text-3xl font-bold text-white mb-1">
+                      {analytics?.avgCompletionRate || '0.0'}%
+                    </p>
+                    <p className="text-purple-100 text-xs">Average progress</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <Award className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-orange-700 font-medium">Engagement</p>
-                        <h3 className="text-3xl font-bold text-orange-900 mt-1">{analytics.engagementRate}%</h3>
-                      </div>
-                      <div className="p-3 bg-orange-600 rounded-lg">
-                        <TrendingUp className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+            <Card className="border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Engagement</p>
+                    <p className="text-3xl font-bold text-gray-900 mb-1">
+                      {analytics?.engagementRate || '0'}%
+                    </p>
+                    <p className="text-gray-500 text-xs">Member activity</p>
+                  </div>
+                  <div className="bg-blue-100 rounded-lg p-3">
+                    <TrendingUp className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Workout Plan
+            </Button>
+          </div>
 
             {/* Search and Filters */}
             <div className="space-y-4">
@@ -347,7 +386,6 @@ export default function WorkoutPlansPage() {
                 )}
               </AnimatePresence>
             </div>
-          </div>
 
           {/* Workout Templates Grid */}
           {loadingTemplates ? (
@@ -395,6 +433,7 @@ export default function WorkoutPlansPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
+                  onClick={() => router.push(`/workout-plans/${template.id}`)}
                 >
                   <Card className="border-0 shadow-lg hover:shadow-xl transition-all group cursor-pointer overflow-hidden">
                     {/* Gradient Header */}
@@ -435,23 +474,13 @@ export default function WorkoutPlansPage() {
                       {/* Actions */}
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
-                          <Link href={`/workout-plans/${template.id}`} className="flex-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full group-hover:border-blue-600 group-hover:text-blue-600"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                          </Link>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={async (e) => {
                             e.stopPropagation()
                             if (!gymId || !user?.id) return
-                            if (!confirm('Duplicate this workout plan?')) return
+                            if (!confirm('Are you sure you want to duplicate this workout plan?')) return
                             
                             try {
                               // Create duplicate template
@@ -512,15 +541,41 @@ export default function WorkoutPlansPage() {
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                          <Link href={`/workout-plans/${template.id}`}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="group-hover:border-orange-600 group-hover:text-orange-600"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/workout-plans/${template.id}`)
+                          }}
+                          className="group-hover:border-orange-600 group-hover:text-orange-600"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (!confirm('Are you sure you want to delete this workout plan?')) return
+                            
+                            try {
+                              await supabase
+                                .from('workout_plan_templates')
+                                .delete()
+                                .eq('id', template.id)
+                              
+                              alert('Workout plan deleted successfully!')
+                              window.location.reload()
+                            } catch (error) {
+                              console.error('Error deleting:', error)
+                              alert('Failed to delete workout plan')
+                            }
+                          }}
+                          className="group-hover:border-red-600 group-hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         </div>
                         <Button
                           onClick={(e) => {
