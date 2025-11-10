@@ -6,10 +6,11 @@ import { useGymContext } from '@/contexts/GymContext'
 import { useWorkoutTemplates, useWorkoutAnalytics, useCreateWorkoutTemplate } from '@/hooks/useWorkoutPlans'
 import ProtectedPage from '@/components/ProtectedPage'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { 
   Dumbbell, Plus, Search, Filter, TrendingUp, Users, 
   Award, Target, Calendar, MoreVertical, Edit, Trash2, 
-  Copy, Eye, Clock, Zap, ArrowUp, Activity, ChevronDown
+  Copy, Eye, Clock, Zap, ArrowUp, Activity, ChevronDown, CheckCircle
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,11 @@ export default function WorkoutPlansPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [assignTemplateId, setAssignTemplateId] = useState<string | null>(null)
+  const [members, setMembers] = useState<any[]>([])
+  const [selectedMemberId, setSelectedMemberId] = useState('')
+  const [assignmentLoading, setAssignmentLoading] = useState(false)
   
   // Form states for creating workout plan
   const [formData, setFormData] = useState({
@@ -42,6 +48,73 @@ export default function WorkoutPlansPage() {
   })
   const [isCreating, setIsCreating] = useState(false)
   
+  // Fetch members when assign modal opens
+  const fetchMembers = async () => {
+    if (!gymId) return
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, first_name, last_name, email, membership_status')
+        .eq('gym_id', gymId)
+        .order('first_name', { ascending: true })
+      
+      if (error) throw error
+      setMembers(data || [])
+    } catch (error) {
+      console.error('Error fetching members:', error)
+    }
+  }
+
+  const handleOpenAssignModal = (templateId: string) => {
+    setAssignTemplateId(templateId)
+    setShowAssignModal(true)
+    fetchMembers()
+  }
+
+  const handleAssignWorkout = async () => {
+    if (!gymId || !assignTemplateId || !selectedMemberId) {
+      alert('Please select a member')
+      return
+    }
+    
+    const template = templates.find(t => t.id === assignTemplateId)
+    if (!template) return
+    
+    setAssignmentLoading(true)
+    try {
+      const { error } = await supabase
+        .from('member_workout_plans')
+        .insert({
+          gym_id: gymId,
+          member_id: selectedMemberId,
+          template_id: assignTemplateId,
+          plan_name: template.name,
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: new Date(Date.now() + template.duration_weeks * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          status: 'Active',
+          completion_percentage: 0,
+        })
+      
+      if (error) throw error
+      
+      // Update times_assigned count
+      await supabase
+        .from('workout_plan_templates')
+        .update({ times_assigned: (template.times_assigned || 0) + 1 })
+        .eq('id', assignTemplateId)
+      
+      alert('Workout plan assigned successfully!')
+      setShowAssignModal(false)
+      setSelectedMemberId('')
+      window.location.reload()
+    } catch (error) {
+      console.error('Error assigning workout:', error)
+      alert('Failed to assign workout plan')
+    } finally {
+      setAssignmentLoading(false)
+    }
+  }
+
   // Handle form submission
   const handleCreateWorkout = async () => {
     if (!gymId || !formData.name.trim()) {
@@ -360,28 +433,105 @@ export default function WorkoutPlansPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center space-x-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Link href={`/workout-plans/${template.id}`} className="flex-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full group-hover:border-blue-600 group-hover:text-blue-600"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </Link>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 group-hover:border-blue-600 group-hover:text-blue-600"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (!gymId || !user?.id) return
+                            if (!confirm('Duplicate this workout plan?')) return
+                            
+                            try {
+                              // Create duplicate template
+                              const { data: newTemplate, error: templateError } = await supabase
+                                .from('workout_plan_templates')
+                                .insert({
+                                  gym_id: gymId,
+                                  name: `${template.name} (Copy)`,
+                                  description: template.description,
+                                  duration_weeks: template.duration_weeks,
+                                  difficulty_level: template.difficulty_level,
+                                  category: template.category,
+                                  is_active: true,
+                                  created_by: user.id,
+                                })
+                                .select()
+                                .single()
+                              
+                              if (templateError) throw templateError
+                              
+                              // Fetch and duplicate exercises
+                              const { data: exercises } = await supabase
+                                .from('workout_exercises')
+                                .select('*')
+                                .eq('template_id', template.id)
+                              
+                              if (exercises && exercises.length > 0) {
+                                const duplicatedExercises = exercises.map((ex: any) => ({
+                                  template_id: newTemplate.id,
+                                  gym_id: gymId,
+                                  day_number: ex.day_number,
+                                  exercise_name: ex.exercise_name,
+                                  exercise_type: ex.exercise_type,
+                                  target_muscle_group: ex.target_muscle_group,
+                                  sets: ex.sets,
+                                  reps: ex.reps,
+                                  duration_minutes: ex.duration_minutes,
+                                  rest_seconds: ex.rest_seconds,
+                                  weight_recommendation: ex.weight_recommendation,
+                                  instructions: ex.instructions,
+                                  video_url: ex.video_url,
+                                  order_index: ex.order_index,
+                                }))
+                                
+                                await supabase
+                                  .from('workout_exercises')
+                                  .insert(duplicatedExercises)
+                              }
+                              
+                              alert('Workout plan duplicated successfully!')
+                              window.location.reload()
+                            } catch (error) {
+                              console.error('Error duplicating:', error)
+                              alert('Failed to duplicate workout plan')
+                            }
+                          }}
                           className="group-hover:border-purple-600 group-hover:text-purple-600"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
+                          <Link href={`/workout-plans/${template.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="group-hover:border-orange-600 group-hover:text-orange-600"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
                         <Button
-                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOpenAssignModal(template.id)
+                          }}
                           size="sm"
-                          className="group-hover:border-orange-600 group-hover:text-orange-600"
+                          className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Users className="h-4 w-4 mr-2" />
+                          Assign to Member
                         </Button>
                       </div>
                     </CardContent>
@@ -573,6 +723,122 @@ export default function WorkoutPlansPage() {
                         <>
                           <Plus className="h-4 w-4 mr-2" />
                           Create Workout Plan
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Assign Workout Modal */}
+        <AnimatePresence>
+          {showAssignModal && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !assignmentLoading && setShowAssignModal(false)}
+                className="fixed inset-0 bg-black bg-opacity-50 z-50"
+              />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-green-600 to-teal-600 p-6 rounded-t-2xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                          <Users className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-white">Assign Workout Plan</h3>
+                          <p className="text-green-100 text-sm">Choose a member to assign this plan</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => !assignmentLoading && setShowAssignModal(false)}
+                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                        disabled={assignmentLoading}
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Select Member <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={selectedMemberId}
+                        onChange={(e) => setSelectedMemberId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        disabled={assignmentLoading}
+                      >
+                        <option value="">Choose a member...</option>
+                        {members.map(member => (
+                          <option key={member.id} value={member.id}>
+                            {member.first_name} {member.last_name} - {member.email}
+                          </option>
+                        ))}
+                      </select>
+                      {members.length === 0 && (
+                        <p className="text-sm text-gray-500 mt-2">No active members found</p>
+                      )}
+                    </div>
+
+                    {selectedMemberId && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm text-green-800">
+                            <p className="font-semibold mb-1">Ready to Assign</p>
+                            <p>This workout plan will be assigned with today as the start date.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-end space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAssignModal(false)}
+                      disabled={assignmentLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleAssignWorkout}
+                      disabled={assignmentLoading || !selectedMemberId}
+                      className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+                    >
+                      {assignmentLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Assigning...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Assign Workout Plan
                         </>
                       )}
                     </Button>
