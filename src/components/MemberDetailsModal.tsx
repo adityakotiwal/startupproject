@@ -27,6 +27,7 @@ import RecordPaymentModal from './RecordPaymentModal'
 import MemberActivityModal from './MemberActivityModal'
 import InstallmentDisplay from './InstallmentDisplay'
 import PhotoZoomModal from './PhotoZoomModal'
+import AssignedWorkoutPlans from './AssignedWorkoutPlans'
 
 interface Member {
   id: string
@@ -375,6 +376,9 @@ export default function MemberDetailsModal({
                 )}
               </CardContent>
             </Card>
+
+            {/* Assigned Workout Plans */}
+            <AssignedWorkoutPlans memberId={member.id} />
           </div>
 
           {/* Membership Details Sidebar */}
