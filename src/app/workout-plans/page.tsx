@@ -10,7 +10,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { 
   Dumbbell, Plus, Search, Filter, TrendingUp, Users, 
   Award, Target, Calendar, MoreVertical, Edit, Trash2, 
-  Copy, Eye, Clock, Zap, ArrowUp, Activity, ChevronDown, CheckCircle
+  Copy, Eye, Clock, Zap, ArrowUp, Activity, ChevronDown, CheckCircle,
+  UserCheck, X, Pause, Play, BarChart3, Mail, Phone
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -37,6 +38,13 @@ export default function WorkoutPlansPage() {
   const [members, setMembers] = useState<any[]>([])
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [assignmentLoading, setAssignmentLoading] = useState(false)
+  
+  // Assigned members view
+  const [activeTab, setActiveTab] = useState<'templates' | 'assigned'>('templates')
+  const [assignedPlans, setAssignedPlans] = useState<any[]>([])
+  const [loadingAssigned, setLoadingAssigned] = useState(false)
+  const [showManageModal, setShowManageModal] = useState(false)
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null)
   
   // Form states for creating workout plan
   const [formData, setFormData] = useState({
@@ -113,7 +121,11 @@ export default function WorkoutPlansPage() {
       alert('Workout plan assigned successfully!')
       setShowAssignModal(false)
       setSelectedMemberId('')
-      window.location.reload()
+      if (activeTab === 'assigned') {
+        fetchAssignedPlans()
+      } else {
+        window.location.reload()
+      }
     } catch (error) {
       console.error('Error assigning workout:', error)
       alert('Failed to assign workout plan')
@@ -121,6 +133,109 @@ export default function WorkoutPlansPage() {
       setAssignmentLoading(false)
     }
   }
+
+  // Fetch assigned plans
+  const fetchAssignedPlans = async () => {
+    if (!gymId) return
+    setLoadingAssigned(true)
+    try {
+      const { data, error } = await supabase
+        .from('member_workout_plans')
+        .select(`
+          *,
+          members!member_id (
+            id,
+            custom_fields,
+            status
+          ),
+          workout_plan_templates!template_id (
+            name,
+            difficulty_level,
+            category,
+            duration_weeks
+          )
+        `)
+        .eq('gym_id', gymId)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setAssignedPlans(data || [])
+    } catch (error) {
+      console.error('Error fetching assigned plans:', error)
+    } finally {
+      setLoadingAssigned(false)
+    }
+  }
+
+  // Manage assignment actions
+  const handleRemoveAssignment = async (assignmentId: string) => {
+    if (!confirm('Are you sure you want to remove this workout plan assignment?')) return
+    
+    try {
+      const { error } = await supabase
+        .from('member_workout_plans')
+        .delete()
+        .eq('id', assignmentId)
+      
+      if (error) throw error
+      alert('Assignment removed successfully!')
+      fetchAssignedPlans()
+    } catch (error) {
+      console.error('Error removing assignment:', error)
+      alert('Failed to remove assignment')
+    }
+  }
+
+  const handleUpdateStatus = async (assignmentId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('member_workout_plans')
+        .update({ status: newStatus })
+        .eq('id', assignmentId)
+      
+      if (error) throw error
+      alert('Status updated successfully!')
+      fetchAssignedPlans()
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update status')
+    }
+  }
+
+  const handleExtendPlan = async (assignment: any) => {
+    const extraWeeks = prompt('How many weeks do you want to extend?', '4')
+    if (!extraWeeks) return
+    
+    const weeks = parseInt(extraWeeks)
+    if (isNaN(weeks) || weeks <= 0) {
+      alert('Please enter a valid number of weeks')
+      return
+    }
+    
+    try {
+      const currentEndDate = new Date(assignment.end_date)
+      const newEndDate = new Date(currentEndDate.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
+      
+      const { error } = await supabase
+        .from('member_workout_plans')
+        .update({ end_date: newEndDate.toISOString().split('T')[0] })
+        .eq('id', assignment.id)
+      
+      if (error) throw error
+      alert(`Plan extended by ${weeks} weeks!`)
+      fetchAssignedPlans()
+    } catch (error) {
+      console.error('Error extending plan:', error)
+      alert('Failed to extend plan')
+    }
+  }
+
+  // Load assigned plans when tab changes
+  useMemo(() => {
+    if (activeTab === 'assigned') {
+      fetchAssignedPlans()
+    }
+  }, [activeTab, gymId])
 
   // Handle form submission
   const handleCreateWorkout = async () => {
@@ -298,18 +413,63 @@ export default function WorkoutPlansPage() {
             </Card>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Add Workout Plan
-            </Button>
+          {/* Tab Navigation */}
+          <div className="mb-6 border-b border-gray-200">
+            <nav className="flex space-x-8" aria-label="Tabs">
+              <button
+                onClick={() => setActiveTab('templates')}
+                className={`
+                  py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === 'templates'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                <div className="flex items-center space-x-2">
+                  <Dumbbell className="h-5 w-5" />
+                  <span>Workout Templates</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                    {templates.filter(t => t.is_active).length}
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('assigned')}
+                className={`
+                  py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === 'assigned'
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                <div className="flex items-center space-x-2">
+                  <UserCheck className="h-5 w-5" />
+                  <span>Assigned Plans</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                    {assignedPlans.length}
+                  </span>
+                </div>
+              </button>
+            </nav>
           </div>
 
-            {/* Search and Filters */}
+          {/* Templates View */}
+          {activeTab === 'templates' && (
+            <>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Workout Plan
+                </Button>
+              </div>
+
+              {/* Search and Filters */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
@@ -605,6 +765,232 @@ export default function WorkoutPlansPage() {
               </p>
             </div>
           )}
+            </>
+          )}
+
+          {/* Assigned Members View */}
+          {activeTab === 'assigned' && (
+            <div className="space-y-6">
+              {/* Header Actions */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Active Assignments</h2>
+                  <p className="text-gray-600 mt-1">Manage workout plans assigned to your members</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setShowAssignModal(true)
+                    setAssignTemplateId(null)
+                    fetchMembers()
+                  }}
+                  className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Assign New Plan
+                </Button>
+              </div>
+
+              {/* Loading State */}
+              {loadingAssigned ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                </div>
+              ) : assignedPlans.length === 0 ? (
+                <Card className="border-2 border-dashed border-gray-300">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <UserCheck className="h-16 w-16 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Assigned Plans Yet</h3>
+                    <p className="text-gray-600 mb-6 text-center max-w-md">
+                      Start assigning workout plans to your members to help them achieve their fitness goals
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setShowAssignModal(true)
+                        setAssignTemplateId(null)
+                        fetchMembers()
+                      }}
+                      className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Assign Your First Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {assignedPlans.map((assignment) => {
+                    const member = assignment.members
+                    const template = assignment.workout_plan_templates
+                    const memberName = member?.custom_fields?.full_name || 'Unknown Member'
+                    const memberEmail = member?.custom_fields?.email
+                    const memberPhone = member?.custom_fields?.phone
+                    
+                    // Calculate days remaining
+                    const endDate = new Date(assignment.end_date)
+                    const today = new Date()
+                    const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                    const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
+                    const isExpired = daysRemaining < 0
+                    
+                    return (
+                      <motion.div
+                        key={assignment.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group"
+                      >
+                        <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-green-500">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              {/* Member Info */}
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-4 mb-4">
+                                  <div className="h-12 w-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {memberName.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <h3 className="text-lg font-bold text-gray-900">{memberName}</h3>
+                                    <div className="flex items-center space-x-3 text-sm text-gray-600">
+                                      {memberEmail && (
+                                        <div className="flex items-center">
+                                          <Mail className="h-3 w-3 mr-1" />
+                                          {memberEmail}
+                                        </div>
+                                      )}
+                                      {memberPhone && (
+                                        <div className="flex items-center">
+                                          <Phone className="h-3 w-3 mr-1" />
+                                          {memberPhone}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Plan Details */}
+                                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-semibold text-gray-900">{assignment.plan_name}</h4>
+                                    <span className={`
+                                      px-3 py-1 rounded-full text-xs font-semibold
+                                      ${assignment.status === 'Active' ? 'bg-green-100 text-green-700' : ''}
+                                      ${assignment.status === 'Completed' ? 'bg-blue-100 text-blue-700' : ''}
+                                      ${assignment.status === 'Paused' ? 'bg-yellow-100 text-yellow-700' : ''}
+                                    `}>
+                                      {assignment.status}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div>
+                                      <p className="text-gray-500 text-xs">Difficulty</p>
+                                      <p className="font-medium text-gray-900">{template?.difficulty_level || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-500 text-xs">Category</p>
+                                      <p className="font-medium text-gray-900">{template?.category || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-500 text-xs">Duration</p>
+                                      <p className="font-medium text-gray-900">{template?.duration_weeks || 0} weeks</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-500 text-xs">Progress</p>
+                                      <p className="font-medium text-gray-900">{assignment.completion_percentage || 0}%</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="mb-4">
+                                  <div className="flex items-center justify-between text-sm mb-2">
+                                    <span className="text-gray-600">Completion Progress</span>
+                                    <span className="font-semibold text-gray-900">{assignment.completion_percentage || 0}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-gradient-to-r from-green-500 to-teal-500 h-2 rounded-full transition-all"
+                                      style={{ width: `${assignment.completion_percentage || 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Date Info */}
+                                <div className="flex items-center space-x-6 text-sm">
+                                  <div className="flex items-center text-gray-600">
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    <span>Started: {new Date(assignment.start_date).toLocaleDateString()}</span>
+                                  </div>
+                                  <div className={`flex items-center ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : 'text-gray-600'}`}>
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    <span>
+                                      {isExpired ? 'Expired' : isExpiringSoon ? `${daysRemaining} days left` : `Ends: ${new Date(assignment.end_date).toLocaleDateString()}`}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-col space-y-2 ml-4">
+                                {assignment.status === 'Active' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleUpdateStatus(assignment.id, 'Paused')}
+                                    className="hover:border-yellow-600 hover:text-yellow-600"
+                                  >
+                                    <Pause className="h-4 w-4 mr-2" />
+                                    Pause
+                                  </Button>
+                                )}
+                                {assignment.status === 'Paused' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleUpdateStatus(assignment.id, 'Active')}
+                                    className="hover:border-green-600 hover:text-green-600"
+                                  >
+                                    <Play className="h-4 w-4 mr-2" />
+                                    Resume
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleExtendPlan(assignment)}
+                                  className="hover:border-blue-600 hover:text-blue-600"
+                                >
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Extend
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => router.push(`/members?id=${member?.id}`)}
+                                  className="hover:border-purple-600 hover:text-purple-600"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRemoveAssignment(assignment.id)}
+                                  className="hover:border-red-600 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </main>
 
         {/* Create Workout Plan Modal */}
@@ -836,6 +1222,28 @@ export default function WorkoutPlansPage() {
 
                   {/* Content */}
                   <div className="p-6 space-y-6">
+                    {/* Template Selection - Only show if no template pre-selected */}
+                    {!assignTemplateId && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Select Workout Plan <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={assignTemplateId || ''}
+                          onChange={(e) => setAssignTemplateId(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          disabled={assignmentLoading}
+                        >
+                          <option value="">Choose a workout plan...</option>
+                          {templates.filter(t => t.is_active).map(template => (
+                            <option key={template.id} value={template.id}>
+                              {template.name} - {template.difficulty_level} ({template.duration_weeks} weeks)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Select Member <span className="text-red-500">*</span>
@@ -882,7 +1290,7 @@ export default function WorkoutPlansPage() {
                     </Button>
                     <Button
                       onClick={handleAssignWorkout}
-                      disabled={assignmentLoading || !selectedMemberId}
+                      disabled={assignmentLoading || !selectedMemberId || !assignTemplateId}
                       className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
                     >
                       {assignmentLoading ? (
