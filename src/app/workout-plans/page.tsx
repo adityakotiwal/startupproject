@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/contexts/GymContext'
 import { useWorkoutTemplates, useWorkoutAnalytics, useCreateWorkoutTemplate } from '@/hooks/useWorkoutPlans'
@@ -23,8 +23,8 @@ export default function WorkoutPlansPage() {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { currentGym, gymId } = useGymContext()
-  const { data: templates = [], isPending: loadingTemplates } = useWorkoutTemplates(gymId)
-  const { data: analytics } = useWorkoutAnalytics(gymId)
+  const { data: templates = [], isPending: loadingTemplates, refetch: refetchTemplates } = useWorkoutTemplates(gymId)
+  const { data: analytics, refetch: refetchAnalytics } = useWorkoutAnalytics(gymId)
   const createTemplate = useCreateWorkoutTemplate()
   
   const [searchQuery, setSearchQuery] = useState('')
@@ -121,10 +121,11 @@ export default function WorkoutPlansPage() {
       alert('Workout plan assigned successfully!')
       setShowAssignModal(false)
       setSelectedMemberId('')
+      // Refetch data instead of full page reload
+      await refetchTemplates()
+      await refetchAnalytics()
       if (activeTab === 'assigned') {
-        fetchAssignedPlans()
-      } else {
-        window.location.reload()
+        await fetchAssignedPlans()
       }
     } catch (error) {
       console.error('Error assigning workout:', error)
@@ -230,9 +231,16 @@ export default function WorkoutPlansPage() {
     }
   }
 
+  // Load assigned plans on mount and when relevant data changes
+  useEffect(() => {
+    if (gymId) {
+      fetchAssignedPlans()
+    }
+  }, [gymId])
+
   // Load assigned plans when tab changes
-  useMemo(() => {
-    if (activeTab === 'assigned') {
+  useEffect(() => {
+    if (activeTab === 'assigned' && gymId) {
       fetchAssignedPlans()
     }
   }, [activeTab, gymId])
@@ -691,7 +699,9 @@ export default function WorkoutPlansPage() {
                               }
                               
                               alert('Workout plan duplicated successfully!')
-                              window.location.reload()
+                              // Refetch data instead of full page reload
+                              await refetchTemplates()
+                              await refetchAnalytics()
                             } catch (error) {
                               console.error('Error duplicating:', error)
                               alert('Failed to duplicate workout plan')
@@ -726,7 +736,9 @@ export default function WorkoutPlansPage() {
                                 .eq('id', template.id)
                               
                               alert('Workout plan deleted successfully!')
-                              window.location.reload()
+                              // Refetch data instead of full page reload
+                              await refetchTemplates()
+                              await refetchAnalytics()
                             } catch (error) {
                               console.error('Error deleting:', error)
                               alert('Failed to delete workout plan')
