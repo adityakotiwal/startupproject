@@ -54,10 +54,10 @@ export default function WorkoutPlansPage() {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id, first_name, last_name, email, membership_status, photo_url')
+        .select('id, custom_fields, status')
         .eq('gym_id', gymId)
-        .eq('membership_status', 'Active')
-        .order('first_name', { ascending: true })
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
       
       if (error) {
         console.error('Error fetching members:', error)
@@ -849,7 +849,7 @@ export default function WorkoutPlansPage() {
                         <option value="">Choose a member...</option>
                         {members.map(member => (
                           <option key={member.id} value={member.id}>
-                            {member.first_name} {member.last_name} - {member.email}
+                            {member.custom_fields?.full_name || 'Unknown Member'} {member.custom_fields?.email ? `- ${member.custom_fields.email}` : ''}
                           </option>
                         ))}
                       </select>
