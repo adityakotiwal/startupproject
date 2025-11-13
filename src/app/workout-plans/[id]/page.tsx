@@ -349,11 +349,17 @@ export default function WorkoutPlanDetailPage() {
                       />
                     </div>
                     <div className="flex space-x-2">
-                      <Button onClick={handleUpdateTemplate} className="bg-white text-blue-600 hover:bg-gray-100">
+                      <Button 
+                        onClick={handleUpdateTemplate} 
+                        className="bg-green-500 text-white hover:bg-green-600 shadow-lg font-semibold border-2 border-green-400"
+                      >
                         <Save className="h-4 w-4 mr-2" />
                         Save Changes
                       </Button>
-                      <Button onClick={() => setIsEditing(false)} variant="outline" className="border-white text-white hover:bg-white hover:bg-opacity-20">
+                      <Button 
+                        onClick={() => setIsEditing(false)} 
+                        className="bg-red-500 text-white hover:bg-red-600 shadow-lg font-semibold border-2 border-red-400"
+                      >
                         <X className="h-4 w-4 mr-2" />
                         Cancel
                       </Button>
@@ -387,21 +393,21 @@ export default function WorkoutPlanDetailPage() {
                       <div className="flex flex-wrap gap-2">
                         <Button 
                           onClick={() => setIsEditing(true)} 
-                          className="bg-white text-blue-600 hover:bg-blue-50 shadow-md font-semibold"
+                          className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 shadow-lg font-semibold border-2 border-yellow-300"
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Plan
                         </Button>
                         <Button 
                           onClick={handleDuplicateTemplate} 
-                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-md font-semibold"
+                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-lg font-semibold border-2 border-purple-400"
                         >
                           <Copy className="h-4 w-4 mr-2" />
                           Duplicate
                         </Button>
                         <Button 
                           onClick={handleDeleteTemplate} 
-                          className="bg-red-500 hover:bg-red-600 text-white shadow-md font-semibold"
+                          className="bg-red-500 hover:bg-red-600 text-white shadow-lg font-semibold border-2 border-red-400"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
