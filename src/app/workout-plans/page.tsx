@@ -466,40 +466,49 @@ export default function WorkoutPlansPage() {
           {/* Templates View */}
           {activeTab === 'templates' && (
             <>
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              {/* Action Bar - More Prominent */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Your Workout Templates</h2>
+                  <p className="text-gray-600 mt-1">Create and manage reusable workout plans</p>
+                </div>
                 <Button
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold"
+                  size="lg"
                 >
                   <Plus className="h-5 w-5 mr-2" />
-                  Add Workout Plan
+                  Create New Plan
                 </Button>
               </div>
 
-              {/* Search and Filters */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search workout plans by name or description..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-white border-gray-300 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="bg-white"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                </Button>
-              </div>
+              {/* Search and Filters - Cleaner Design */}
+            <div className="space-y-6 mb-8">
+              <Card className="border-0 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search workout plans by name or description..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-12 h-12 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500 text-base"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="bg-white h-12 px-6 border-2"
+                    >
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filters
+                      <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Filter Options */}
               <AnimatePresence>
@@ -591,7 +600,7 @@ export default function WorkoutPlansPage() {
             </Card>
           ) : (
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -603,39 +612,50 @@ export default function WorkoutPlansPage() {
                   transition={{ delay: index * 0.05 }}
                   onClick={() => router.push(`/workout-plans/${template.id}`)}
                 >
-                  <Card className="border-0 shadow-lg hover:shadow-xl transition-all group cursor-pointer overflow-hidden">
-                    {/* Gradient Header */}
-                    <div className="h-32 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 relative">
-                      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                      <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(template.difficulty_level)}`}>
+                  <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer overflow-hidden hover:-translate-y-1">
+                    {/* Gradient Header - Taller */}
+                    <div className="h-40 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 relative">
+                      <div className="absolute inset-0 bg-black bg-opacity-10 group-hover:bg-opacity-0 transition-all"></div>
+                      <div className="absolute top-5 right-5">
+                        <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${getDifficultyColor(template.difficulty_level)}`}>
                           {template.difficulty_level}
                         </span>
                       </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-xl font-bold text-white mb-1">{template.name}</h3>
+                      <div className="absolute bottom-5 left-5 right-5">
+                        <h3 className="text-2xl font-bold text-white mb-2 line-clamp-2 group-hover:text-yellow-300 transition-colors">{template.name}</h3>
                         {template.category && (
-                          <span className="text-white text-sm bg-white bg-opacity-20 px-2 py-1 rounded">
+                          <span className="inline-flex items-center text-white text-sm bg-white bg-opacity-30 backdrop-blur-sm px-3 py-1 rounded-full font-medium">
+                            <Dumbbell className="h-3 w-3 mr-1" />
                             {template.category}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <CardContent className="p-6">
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    <CardContent className="p-7">
+                      <p className="text-gray-600 text-base mb-6 line-clamp-2 min-h-[3rem]">
                         {template.description || 'No description provided'}
                       </p>
 
-                      {/* Stats */}
-                      <div className="flex items-center justify-between text-sm mb-4">
-                        <div className="flex items-center space-x-1 text-gray-600">
-                          <Calendar className="h-4 w-4" />
-                          <span>{template.duration_weeks} weeks</span>
+                      {/* Stats - More Visual */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-blue-50 rounded-lg p-3 flex items-center space-x-2">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Duration</p>
+                            <p className="text-sm font-bold text-gray-900">{template.duration_weeks} weeks</p>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1 text-gray-600">
-                          <Users className="h-4 w-4" />
-                          <span>{template.times_assigned || 0} assigned</span>
+                        <div className="bg-green-50 rounded-lg p-3 flex items-center space-x-2">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <Users className="h-4 w-4 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Assigned</p>
+                            <p className="text-sm font-bold text-gray-900">{template.times_assigned || 0} members</p>
+                          </div>
                         </div>
                       </div>
 
@@ -754,10 +774,9 @@ export default function WorkoutPlansPage() {
                             e.stopPropagation()
                             handleOpenAssignModal(template.id)
                           }}
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+                          className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold shadow-md hover:shadow-lg transition-all h-11"
                         >
-                          <Users className="h-4 w-4 mr-2" />
+                          <Users className="h-5 w-5 mr-2" />
                           Assign to Member
                         </Button>
                       </div>

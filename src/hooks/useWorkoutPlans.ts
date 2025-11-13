@@ -31,14 +31,23 @@ export function useWorkoutTemplates(gymId: string | null) {
     queryFn: async () => {
       if (!gymId) return []
       
-      const { data, error } = await supabase
+      // Fetch templates with actual assignment count from member_workout_plans
+      const { data: templates, error } = await supabase
         .from('workout_plan_templates')
-        .select('*')
+        .select(`
+          *,
+          member_workout_plans!template_id(count)
+        `)
         .eq('gym_id', gymId)
         .order('created_at', { ascending: false })
       
       if (error) throw error
-      return data || []
+      
+      // Map the count to times_assigned field for consistency
+      return (templates || []).map(template => ({
+        ...template,
+        times_assigned: template.member_workout_plans?.[0]?.count || 0
+      }))
     },
     enabled: !!gymId,
     staleTime: 0, // Always consider data stale
@@ -53,14 +62,23 @@ export function useWorkoutTemplate(id: string | null) {
     queryFn: async () => {
       if (!id) return null
       
-      const { data, error } = await supabase
+      // Fetch template with actual assignment count
+      const { data: template, error } = await supabase
         .from('workout_plan_templates')
-        .select('*')
+        .select(`
+          *,
+          member_workout_plans!template_id(count)
+        `)
         .eq('id', id)
         .single()
       
       if (error) throw error
-      return data
+      
+      // Map the count to times_assigned field
+      return {
+        ...template,
+        times_assigned: template.member_workout_plans?.[0]?.count || 0
+      }
     },
     enabled: !!id,
   })
