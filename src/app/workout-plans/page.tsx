@@ -730,7 +730,7 @@ export default function WorkoutPlansPage() {
                           className="flex-1 group/copy hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200 overflow-hidden"
                         >
                           <Copy className="h-4 w-4 flex-shrink-0" />
-                          <span className="max-w-0 group-hover/copy:max-w-[100px] overflow-hidden transition-all duration-200 group-hover/copy:ml-2 whitespace-nowrap">
+                          <span className="max-w-0 group-hover/copy:max-w-[150px] overflow-hidden transition-all duration-300 group-hover/copy:ml-2 whitespace-nowrap">
                             Duplicate
                           </span>
                         </Button>
@@ -744,7 +744,7 @@ export default function WorkoutPlansPage() {
                           className="flex-1 group/edit hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200 overflow-hidden"
                         >
                           <Edit className="h-4 w-4 flex-shrink-0" />
-                          <span className="max-w-0 group-hover/edit:max-w-xs overflow-hidden transition-all duration-200 group-hover/edit:ml-2 whitespace-nowrap">
+                          <span className="max-w-0 group-hover/edit:max-w-[150px] overflow-hidden transition-all duration-300 group-hover/edit:ml-2 whitespace-nowrap">
                             Edit
                           </span>
                         </Button>
@@ -773,7 +773,7 @@ export default function WorkoutPlansPage() {
                           className="flex-1 group/delete hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all duration-200 overflow-hidden"
                         >
                           <Trash2 className="h-4 w-4 flex-shrink-0" />
-                          <span className="max-w-0 group-hover/delete:max-w-xs overflow-hidden transition-all duration-200 group-hover/delete:ml-2 whitespace-nowrap">
+                          <span className="max-w-0 group-hover/delete:max-w-[150px] overflow-hidden transition-all duration-300 group-hover/delete:ml-2 whitespace-nowrap">
                             Delete
                           </span>
                         </Button>
