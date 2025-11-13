@@ -730,7 +730,7 @@ export default function WorkoutPlansPage() {
                           className="flex-1 group/copy hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200 overflow-hidden"
                         >
                           <Copy className="h-4 w-4 flex-shrink-0" />
-                          <span className="max-w-0 group-hover/copy:max-w-xs overflow-hidden transition-all duration-200 group-hover/copy:ml-2 whitespace-nowrap">
+                          <span className="max-w-0 group-hover/copy:max-w-[100px] overflow-hidden transition-all duration-200 group-hover/copy:ml-2 whitespace-nowrap">
                             Duplicate
                           </span>
                         </Button>
