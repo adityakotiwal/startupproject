@@ -29,7 +29,7 @@ export default function WorkoutPlanDetailPage() {
   const { currentGym, gymId } = useGymContext()
   const templateId = params.id as string
   
-  const { data: template, isPending: loadingTemplate } = useWorkoutTemplate(templateId)
+  const { data: template, isPending: loadingTemplate, refetch: refetchTemplate } = useWorkoutTemplate(templateId)
   const { data: exercises = [], isPending: loadingExercises, refetch: refetchExercises } = useWorkoutExercises(templateId)
   const updateTemplate = useUpdateWorkoutTemplate()
   const deleteTemplate = useDeleteWorkoutTemplate()
@@ -98,7 +98,11 @@ export default function WorkoutPlanDetailPage() {
         id: templateId,
         updates: editForm,
       })
+      // Refetch the template data to show updated values immediately
+      await refetchTemplate()
+      await refetchExercises()
       setIsEditing(false)
+      alert('✅ Workout plan updated successfully!')
     } catch (error) {
       console.error('Error updating template:', error)
       alert('Failed to update workout plan')
@@ -311,56 +315,155 @@ export default function WorkoutPlanDetailPage() {
             <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
               <CardContent className="p-6">
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <Input
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="text-2xl font-bold bg-white bg-opacity-20 border-white border-opacity-30 text-white placeholder-white placeholder-opacity-70"
-                      placeholder="Workout Plan Name"
-                    />
-                    <textarea
-                      value={editForm.description}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-70"
-                      rows={3}
-                      placeholder="Description"
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Input
-                        type="number"
-                        value={editForm.duration_weeks}
-                        onChange={(e) => setEditForm({ ...editForm, duration_weeks: parseInt(e.target.value) })}
-                        className="bg-white bg-opacity-20 border-white border-opacity-30 text-white"
-                      />
-                      <select
-                        value={editForm.difficulty_level}
-                        onChange={(e) => setEditForm({ ...editForm, difficulty_level: e.target.value })}
-                        className="px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white"
-                      >
-                        <option value="Beginner" className="text-gray-900">Beginner</option>
-                        <option value="Intermediate" className="text-gray-900">Intermediate</option>
-                        <option value="Advanced" className="text-gray-900">Advanced</option>
-                      </select>
-                      <Input
-                        value={editForm.category}
-                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                        className="bg-white bg-opacity-20 border-white border-opacity-30 text-white placeholder-white placeholder-opacity-70"
-                        placeholder="Category"
-                      />
+                  <div className="space-y-6">
+                    {/* Edit Mode Header */}
+                    <div className="flex items-center justify-between pb-4 border-b border-white border-opacity-30">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                          <Edit className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold text-white">Edit Workout Plan</h2>
+                          <p className="text-blue-100 text-sm">Update your workout plan details below</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-blue-100">
+                        <Activity className="h-4 w-4" />
+                        <span>{template?.times_assigned || 0} members using this plan</span>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
+
+                    {/* Plan Name */}
+                    <div>
+                      <label className="block text-white text-sm font-semibold mb-2 flex items-center">
+                        <Target className="h-4 w-4 mr-2" />
+                        Plan Name <span className="text-yellow-300 ml-1">*</span>
+                      </label>
+                      <Input
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="text-xl font-bold bg-white text-gray-900 border-2 border-blue-300 focus:border-blue-400 placeholder-gray-400"
+                        placeholder="e.g., Beginner Full Body Workout"
+                      />
+                      <p className="text-blue-100 text-xs mt-1">Give your plan a clear, descriptive name</p>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-white text-sm font-semibold mb-2 flex items-center">
+                        <Activity className="h-4 w-4 mr-2" />
+                        Description
+                      </label>
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                        className="w-full px-4 py-3 bg-white text-gray-900 border-2 border-blue-300 focus:border-blue-400 rounded-lg placeholder-gray-400 resize-none"
+                        rows={4}
+                        placeholder="Describe the goals, target audience, and what makes this plan effective..."
+                      />
+                      <p className="text-blue-100 text-xs mt-1">Help members understand what this plan is about</p>
+                    </div>
+
+                    {/* Plan Configuration Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Duration */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                        <label className="block text-white text-sm font-semibold mb-2 flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Duration (Weeks)
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="52"
+                          value={editForm.duration_weeks}
+                          onChange={(e) => setEditForm({ ...editForm, duration_weeks: parseInt(e.target.value) || 1 })}
+                          className="bg-white text-gray-900 border-2 border-blue-300 focus:border-blue-400 text-lg font-bold"
+                        />
+                        <p className="text-blue-100 text-xs mt-1">How long is this program?</p>
+                      </div>
+
+                      {/* Difficulty */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                        <label className="block text-white text-sm font-semibold mb-2 flex items-center">
+                          <Zap className="h-4 w-4 mr-2" />
+                          Difficulty Level
+                        </label>
+                        <select
+                          value={editForm.difficulty_level}
+                          onChange={(e) => setEditForm({ ...editForm, difficulty_level: e.target.value })}
+                          className="w-full px-3 py-2 bg-white text-gray-900 border-2 border-blue-300 focus:border-blue-400 rounded-lg text-lg font-bold"
+                        >
+                          <option value="Beginner">🟢 Beginner</option>
+                          <option value="Intermediate">🟡 Intermediate</option>
+                          <option value="Advanced">🔴 Advanced</option>
+                        </select>
+                        <p className="text-blue-100 text-xs mt-1">Who is this plan for?</p>
+                      </div>
+
+                      {/* Category */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                        <label className="block text-white text-sm font-semibold mb-2 flex items-center">
+                          <Dumbbell className="h-4 w-4 mr-2" />
+                          Category
+                        </label>
+                        <select
+                          value={editForm.category}
+                          onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                          className="w-full px-3 py-2 bg-white text-gray-900 border-2 border-blue-300 focus:border-blue-400 rounded-lg text-lg font-bold"
+                        >
+                          <option value="">Select Category</option>
+                          <option value="Strength">💪 Strength</option>
+                          <option value="Cardio">🏃 Cardio</option>
+                          <option value="Hypertrophy">🦾 Hypertrophy</option>
+                          <option value="Fat Loss">🔥 Fat Loss</option>
+                          <option value="Endurance">⚡ Endurance</option>
+                          <option value="Flexibility">🧘 Flexibility</option>
+                          <option value="CrossFit">🏋️ CrossFit</option>
+                          <option value="Powerlifting">💥 Powerlifting</option>
+                          <option value="Bodybuilding">🏆 Bodybuilding</option>
+                        </select>
+                        <p className="text-blue-100 text-xs mt-1">Main focus area</p>
+                      </div>
+                    </div>
+
+                    {/* Info Box */}
+                    <div className="bg-blue-500 bg-opacity-20 backdrop-blur-sm border border-blue-300 border-opacity-30 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        <CheckCircle className="h-5 w-5 text-blue-200 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-white">
+                          <p className="font-semibold mb-1">💡 Pro Tip</p>
+                          <p className="text-blue-100">Changes will be reflected for all {template?.times_assigned || 0} members currently using this plan. Make sure your updates are accurate!</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-3 pt-2">
                       <Button 
                         onClick={handleUpdateTemplate} 
-                        className="bg-green-500 text-white hover:bg-green-600 shadow-lg font-semibold border-2 border-green-400"
+                        className="flex-1 bg-green-500 text-white hover:bg-green-600 shadow-xl font-bold text-lg py-6 border-2 border-green-400"
                       >
-                        <Save className="h-4 w-4 mr-2" />
+                        <Save className="h-5 w-5 mr-2" />
                         Save Changes
                       </Button>
                       <Button 
-                        onClick={() => setIsEditing(false)} 
-                        className="bg-red-500 text-white hover:bg-red-600 shadow-lg font-semibold border-2 border-red-400"
+                        onClick={() => {
+                          setIsEditing(false)
+                          // Reset form to original values
+                          if (template) {
+                            setEditForm({
+                              name: template.name,
+                              description: template.description || '',
+                              duration_weeks: template.duration_weeks,
+                              difficulty_level: template.difficulty_level,
+                              category: template.category || '',
+                            })
+                          }
+                        }} 
+                        className="bg-gray-600 text-white hover:bg-gray-700 shadow-xl font-bold text-lg py-6 border-2 border-gray-500"
                       >
-                        <X className="h-4 w-4 mr-2" />
+                        <X className="h-5 w-5 mr-2" />
                         Cancel
                       </Button>
                     </div>
@@ -393,7 +496,7 @@ export default function WorkoutPlanDetailPage() {
                       <div className="flex flex-wrap gap-2">
                         <Button 
                           onClick={() => setIsEditing(true)} 
-                          className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 shadow-lg font-semibold border-2 border-yellow-300"
+                          className="bg-blue-500 text-white hover:bg-blue-600 shadow-lg font-semibold border-2 border-blue-400"
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Plan
