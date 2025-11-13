@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { useGymContext } from '@/contexts/GymContext'
 import { 
@@ -25,6 +26,7 @@ import { supabase } from '@/lib/supabaseClient'
 export default function WorkoutPlanDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { user } = useAuth()
   const { currentGym, gymId } = useGymContext()
   const templateId = params.id as string
@@ -94,13 +96,21 @@ export default function WorkoutPlanDetailPage() {
     if (!templateId || !gymId) return
     
     try {
+      // Update the template
       await updateTemplate.mutateAsync({
         id: templateId,
         updates: editForm,
       })
-      // Refetch the template data to show updated values immediately
-      await refetchTemplate()
-      await refetchExercises()
+      
+      // Invalidate ALL related queries to ensure the main page updates too
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['workoutTemplates', gymId] }),
+        queryClient.invalidateQueries({ queryKey: ['workoutTemplate', templateId] }),
+        queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', gymId] }),
+        refetchTemplate(),
+        refetchExercises()
+      ])
+      
       setIsEditing(false)
       alert('✅ Workout plan updated successfully!')
     } catch (error) {
@@ -115,6 +125,14 @@ export default function WorkoutPlanDetailPage() {
     
     try {
       await deleteTemplate.mutateAsync({ id: templateId, gymId })
+      
+      // Invalidate queries before navigating
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['workoutTemplates', gymId] }),
+        queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', gymId] })
+      ])
+      
+      alert('✅ Workout plan deleted successfully!')
       router.push('/workout-plans')
     } catch (error) {
       console.error('Error deleting template:', error)
@@ -230,7 +248,13 @@ export default function WorkoutPlanDetailPage() {
         if (exercisesError) throw exercisesError
       }
       
-      alert('Workout plan duplicated successfully!')
+      // Invalidate queries to update the main page
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['workoutTemplates', gymId] }),
+        queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', gymId] })
+      ])
+      
+      alert('✅ Workout plan duplicated successfully!')
       router.push(`/workout-plans/${newTemplate.id}`)
     } catch (error) {
       console.error('Error duplicating template:', error)

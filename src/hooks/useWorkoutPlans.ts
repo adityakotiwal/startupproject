@@ -201,8 +201,10 @@ export function useUpdateWorkoutTemplate() {
       return data
     },
     onSuccess: (data) => {
+      // Invalidate all related queries to ensure updates show everywhere
       queryClient.invalidateQueries({ queryKey: workoutKeys.templates(data.gym_id) })
       queryClient.invalidateQueries({ queryKey: workoutKeys.template(data.id) })
+      queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', data.gym_id] })
     },
   })
 }
