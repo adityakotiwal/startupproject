@@ -661,7 +661,7 @@ export default function WorkoutPlansPage() {
 
                       {/* Actions */}
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -727,9 +727,12 @@ export default function WorkoutPlansPage() {
                               alert('Failed to duplicate workout plan')
                             }
                           }}
-                          className="group-hover:border-purple-600 group-hover:text-purple-600"
+                          className="flex-1 group/copy hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200 overflow-hidden"
                         >
-                          <Copy className="h-4 w-4" />
+                          <Copy className="h-4 w-4 flex-shrink-0" />
+                          <span className="max-w-0 group-hover/copy:max-w-xs overflow-hidden transition-all duration-200 group-hover/copy:ml-2 whitespace-nowrap">
+                            Duplicate
+                          </span>
                         </Button>
                         <Button
                           variant="outline"
@@ -738,9 +741,12 @@ export default function WorkoutPlansPage() {
                             e.stopPropagation()
                             router.push(`/workout-plans/${template.id}`)
                           }}
-                          className="group-hover:border-orange-600 group-hover:text-orange-600"
+                          className="flex-1 group/edit hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200 overflow-hidden"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-4 w-4 flex-shrink-0" />
+                          <span className="max-w-0 group-hover/edit:max-w-xs overflow-hidden transition-all duration-200 group-hover/edit:ml-2 whitespace-nowrap">
+                            Edit
+                          </span>
                         </Button>
                         <Button
                           variant="outline"
@@ -764,9 +770,12 @@ export default function WorkoutPlansPage() {
                               alert('Failed to delete workout plan')
                             }
                           }}
-                          className="group-hover:border-red-600 group-hover:text-red-600"
+                          className="flex-1 group/delete hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all duration-200 overflow-hidden"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 flex-shrink-0" />
+                          <span className="max-w-0 group-hover/delete:max-w-xs overflow-hidden transition-all duration-200 group-hover/delete:ml-2 whitespace-nowrap">
+                            Delete
+                          </span>
                         </Button>
                         </div>
                         <Button
