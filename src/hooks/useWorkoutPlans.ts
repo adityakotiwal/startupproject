@@ -41,7 +41,8 @@ export function useWorkoutTemplates(gymId: string | null) {
       return data || []
     },
     enabled: !!gymId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always consider data stale, so invalidation works immediately
+    refetchOnWindowFocus: true, // Refetch when user returns to the page
   })
 }
 
@@ -202,9 +203,19 @@ export function useUpdateWorkoutTemplate() {
     },
     onSuccess: (data) => {
       // Invalidate all related queries to ensure updates show everywhere
-      queryClient.invalidateQueries({ queryKey: workoutKeys.templates(data.gym_id) })
-      queryClient.invalidateQueries({ queryKey: workoutKeys.template(data.id) })
-      queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', data.gym_id] })
+      // refetchType 'active' forces immediate refetch of mounted queries
+      queryClient.invalidateQueries({ 
+        queryKey: workoutKeys.templates(data.gym_id),
+        refetchType: 'active'
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: workoutKeys.template(data.id),
+        refetchType: 'active'
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: ['workoutAnalytics', data.gym_id],
+        refetchType: 'active'
+      })
     },
   })
 }
@@ -303,6 +314,7 @@ export function useWorkoutAnalytics(gymId: string | null) {
       }
     },
     enabled: !!gymId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always consider data stale for real-time updates
+    refetchOnWindowFocus: true,
   })
 }
