@@ -563,7 +563,7 @@ export default function WorkoutPlanDetailPage() {
                       <div className="flex flex-wrap gap-3">
                         <Button 
                           onClick={() => setIsEditing(true)} 
-                          className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl hover:shadow-2xl font-bold border-2 border-white px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105"
+                          className="bg-blue-500 text-white hover:bg-blue-600 shadow-xl hover:shadow-2xl font-bold border-2 border-blue-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105"
                         >
                           <Edit className="h-5 w-5 mr-2" />
                           Edit Plan
