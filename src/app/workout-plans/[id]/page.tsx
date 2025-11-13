@@ -488,48 +488,96 @@ export default function WorkoutPlanDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1 pr-6">
-                        <h1 className="text-4xl font-bold mb-3 leading-tight">{template.name}</h1>
-                        <p className="text-blue-50 text-lg mb-5 leading-relaxed">{template.description || 'No description provided'}</p>
-                        <div className="flex flex-wrap gap-3">
-                          <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 shadow-lg ${getDifficultyColor(template.difficulty_level)}`}>
-                            {template.difficulty_level}
-                          </span>
-                          {template.category && (
-                            <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg backdrop-blur-sm">
-                              {template.category}
-                            </span>
-                          )}
-                          <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg flex items-center backdrop-blur-sm">
-                            <Calendar className="h-4 w-4 mr-1.5" />
-                            {template.duration_weeks} weeks
-                          </span>
-                          <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg flex items-center backdrop-blur-sm">
-                            <Users className="h-4 w-4 mr-1.5" />
-                            {template.times_assigned || 0} assigned
-                          </span>
+                  <div className="space-y-6">
+                    {/* Title Section */}
+                    <div>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h1 className="text-5xl font-black mb-3 leading-tight tracking-tight">{template.name}</h1>
+                          <p className="text-blue-50 text-lg leading-relaxed max-w-3xl">{template.description || 'No description provided'}</p>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Stats & Info Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      {/* Difficulty Card */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-4 border-2 border-white border-opacity-20 shadow-xl hover:bg-opacity-15 transition-all duration-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <Zap className="h-5 w-5 text-yellow-300" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-blue-100 font-medium uppercase tracking-wide">Difficulty</p>
+                            <p className="text-xl font-bold text-white mt-0.5">{template.difficulty_level}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Category Card */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-4 border-2 border-white border-opacity-20 shadow-xl hover:bg-opacity-15 transition-all duration-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <Dumbbell className="h-5 w-5 text-green-300" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-blue-100 font-medium uppercase tracking-wide">Category</p>
+                            <p className="text-xl font-bold text-white mt-0.5">{template.category || 'General'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Duration Card */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-4 border-2 border-white border-opacity-20 shadow-xl hover:bg-opacity-15 transition-all duration-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <Calendar className="h-5 w-5 text-purple-300" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-blue-100 font-medium uppercase tracking-wide">Duration</p>
+                            <p className="text-xl font-bold text-white mt-0.5">{template.duration_weeks} weeks</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Assigned Card */}
+                      <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-xl p-4 border-2 border-white border-opacity-20 shadow-xl hover:bg-opacity-15 transition-all duration-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <Users className="h-5 w-5 text-pink-300" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-blue-100 font-medium uppercase tracking-wide">Members</p>
+                            <p className="text-xl font-bold text-white mt-0.5">{template.times_assigned || 0} assigned</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center space-x-2 text-blue-100">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="text-sm font-medium">Ready to customize and assign to your members</span>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         <Button 
                           onClick={() => setIsEditing(true)} 
-                          className="bg-blue-500 text-white hover:bg-blue-600 shadow-xl hover:shadow-2xl font-bold border-2 border-blue-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
+                          className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl hover:shadow-2xl font-bold border-2 border-white px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105"
                         >
                           <Edit className="h-5 w-5 mr-2" />
                           Edit Plan
                         </Button>
                         <Button 
                           onClick={handleDuplicateTemplate} 
-                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-purple-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
+                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-purple-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105"
                         >
                           <Copy className="h-5 w-5 mr-2" />
                           Duplicate
                         </Button>
                         <Button 
                           onClick={handleDeleteTemplate} 
-                          className="bg-red-500 hover:bg-red-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-red-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
+                          className="bg-red-500 hover:bg-red-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-red-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105"
                         >
                           <Trash2 className="h-5 w-5 mr-2" />
                           Delete
