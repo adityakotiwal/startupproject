@@ -317,22 +317,22 @@ export default function WorkoutPlanDetailPage() {
 
   return (
     <ProtectedPage>
-      <div className="min-h-screen bg-gray-50">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Back Button */}
           <Button
             variant="outline"
             onClick={() => router.push('/workout-plans')}
-            className="mb-6 bg-white hover:bg-gray-50"
+            className="mb-8 bg-white hover:bg-gray-50 shadow-md hover:shadow-lg transition-all duration-200 font-semibold border-2"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Workout Plans
           </Button>
 
           {/* Header */}
-          <div className="mb-8">
-            <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
-              <CardContent className="p-6">
+          <div className="mb-10">
+            <Card className="border-0 shadow-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+              <CardContent className="p-8">
                 {isEditing ? (
                   <div className="space-y-6">
                     {/* Edit Mode Header */}
@@ -489,49 +489,49 @@ export default function WorkoutPlanDetailPage() {
                   </div>
                 ) : (
                   <div>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h1 className="text-3xl font-bold mb-2">{template.name}</h1>
-                        <p className="text-blue-100 mb-4">{template.description || 'No description provided'}</p>
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1 pr-6">
+                        <h1 className="text-4xl font-bold mb-3 leading-tight">{template.name}</h1>
+                        <p className="text-blue-50 text-lg mb-5 leading-relaxed">{template.description || 'No description provided'}</p>
                         <div className="flex flex-wrap gap-3">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${getDifficultyColor(template.difficulty_level)}`}>
+                          <span className={`px-4 py-2 rounded-full text-sm font-bold border-2 shadow-lg ${getDifficultyColor(template.difficulty_level)}`}>
                             {template.difficulty_level}
                           </span>
                           {template.category && (
-                            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-white bg-opacity-20 border border-white border-opacity-30">
+                            <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg backdrop-blur-sm">
                               {template.category}
                             </span>
                           )}
-                          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-white bg-opacity-20 border border-white border-opacity-30 flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
+                          <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg flex items-center backdrop-blur-sm">
+                            <Calendar className="h-4 w-4 mr-1.5" />
                             {template.duration_weeks} weeks
                           </span>
-                          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-white bg-opacity-20 border border-white border-opacity-30 flex items-center">
-                            <Users className="h-4 w-4 mr-1" />
+                          <span className="px-4 py-2 rounded-full text-sm font-bold bg-white bg-opacity-20 border-2 border-white border-opacity-40 shadow-lg flex items-center backdrop-blur-sm">
+                            <Users className="h-4 w-4 mr-1.5" />
                             {template.times_assigned || 0} assigned
                           </span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         <Button 
                           onClick={() => setIsEditing(true)} 
-                          className="bg-blue-500 text-white hover:bg-blue-600 shadow-lg font-semibold border-2 border-blue-400"
+                          className="bg-blue-500 text-white hover:bg-blue-600 shadow-xl hover:shadow-2xl font-bold border-2 border-blue-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
                         >
-                          <Edit className="h-4 w-4 mr-2" />
+                          <Edit className="h-5 w-5 mr-2" />
                           Edit Plan
                         </Button>
                         <Button 
                           onClick={handleDuplicateTemplate} 
-                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-lg font-semibold border-2 border-purple-400"
+                          className="bg-purple-500 hover:bg-purple-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-purple-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
                         >
-                          <Copy className="h-4 w-4 mr-2" />
+                          <Copy className="h-5 w-5 mr-2" />
                           Duplicate
                         </Button>
                         <Button 
                           onClick={handleDeleteTemplate} 
-                          className="bg-red-500 hover:bg-red-600 text-white shadow-lg font-semibold border-2 border-red-400"
+                          className="bg-red-500 hover:bg-red-600 text-white shadow-xl hover:shadow-2xl font-bold border-2 border-red-400 px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 className="h-5 w-5 mr-2" />
                           Delete
                         </Button>
                       </div>
@@ -543,24 +543,32 @@ export default function WorkoutPlanDetailPage() {
           </div>
 
           {/* Days and Exercises */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Activity className="h-6 w-6 mr-2 text-blue-600" />
-                Weekly Schedule
-              </h2>
-              <Button
-                onClick={() => {
-                  setSelectedDay(1)
-                  setExerciseForm({ ...exerciseForm, day_number: 1 })
-                  setShowAddExercise(true)
-                }}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Exercise
-              </Button>
-            </div>
+          <div className="space-y-6">
+            {/* Section Header */}
+            <Card className="border-0 shadow-lg bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 flex items-center mb-2">
+                      <Activity className="h-8 w-8 mr-3 text-blue-600" />
+                      Weekly Schedule
+                    </h2>
+                    <p className="text-gray-600 ml-11">Organize exercises by day to create the perfect training plan</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedDay(1)
+                      setExerciseForm({ ...exerciseForm, day_number: 1 })
+                      setShowAddExercise(true)
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Add Exercise
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {[1, 2, 3, 4, 5, 6, 7].map(day => {
               const dayExercises = exercisesByDay[day] || []
@@ -568,23 +576,27 @@ export default function WorkoutPlanDetailPage() {
               const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
               
               return (
-                <Card key={day} className="border-0 shadow-lg overflow-hidden">
+                <Card key={day} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
                   <div
                     onClick={() => toggleDay(day)}
-                    className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 cursor-pointer hover:from-gray-100 hover:to-blue-100 transition-colors flex items-center justify-between"
+                    className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-5 cursor-pointer hover:from-blue-50 hover:to-purple-50 transition-all duration-200 flex items-center justify-between"
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                    <div className="flex items-center space-x-5">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
                         {day}
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">{dayNames[day - 1]}</h3>
-                        <p className="text-sm text-gray-600">
-                          {dayExercises.length} {dayExercises.length === 1 ? 'exercise' : 'exercises'}
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{dayNames[day - 1]}</h3>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {dayExercises.length === 0 ? (
+                            <span className="text-orange-600">No exercises yet</span>
+                          ) : (
+                            <span className="text-green-600">{dayExercises.length} {dayExercises.length === 1 ? 'exercise' : 'exercises'}</span>
+                          )}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <Button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -593,12 +605,12 @@ export default function WorkoutPlanDetailPage() {
                           setShowAddExercise(true)
                         }}
                         size="sm"
-                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        className="bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg font-bold px-4 py-2 transition-all duration-200"
                       >
                         <Plus className="h-4 w-4 mr-1" />
                         Add
                       </Button>
-                      {isExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+                      {isExpanded ? <ChevronUp className="h-6 w-6 text-gray-600" /> : <ChevronDown className="h-6 w-6 text-gray-600" />}
                     </div>
                   </div>
 
@@ -610,72 +622,79 @@ export default function WorkoutPlanDetailPage() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <CardContent className="p-6">
+                        <CardContent className="p-8">
                           {dayExercises.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                              <Activity className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                              <p>No exercises for this day</p>
+                            <div className="text-center py-12 text-gray-500">
+                              <div className="bg-gray-100 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+                                <Activity className="h-12 w-12 text-gray-400" />
+                              </div>
+                              <p className="text-lg font-semibold text-gray-700 mb-2">No exercises yet</p>
+                              <p className="text-sm text-gray-500 mb-6">Get started by adding your first exercise</p>
                               <Button
                                 onClick={() => {
                                   setSelectedDay(day)
                                   setExerciseForm({ ...exerciseForm, day_number: day })
                                   setShowAddExercise(true)
                                 }}
-                                size="sm"
-                                className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-6 py-3 transition-all duration-200"
                               >
-                                <Plus className="h-4 w-4 mr-2" />
+                                <Plus className="h-5 w-5 mr-2" />
                                 Add First Exercise
                               </Button>
                             </div>
                           ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                               {dayExercises.map((exercise: any, idx: number) => (
-                                <Card key={exercise.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                  <CardContent className="p-4">
+                                <Card key={exercise.id} className="border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:border-blue-300">
+                                  <CardContent className="p-6">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-2">
-                                          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">
+                                        <div className="flex items-center space-x-3 mb-4">
+                                          <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center font-bold text-base shadow-md">
                                             {idx + 1}
                                           </span>
-                                          <h4 className="text-lg font-bold text-gray-900">{exercise.exercise_name}</h4>
+                                          <h4 className="text-xl font-bold text-gray-900">{exercise.exercise_name}</h4>
                                           {exercise.target_muscle_group && (
-                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${getMuscleGroupColor(exercise.target_muscle_group)}`}>
+                                            <span className={`px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm ${getMuscleGroupColor(exercise.target_muscle_group)}`}>
                                               {exercise.target_muscle_group}
                                             </span>
                                           )}
                                         </div>
                                         
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
                                           {exercise.sets && (
-                                            <div className="flex items-center text-gray-700">
-                                              <Target className="h-4 w-4 mr-1 text-blue-600" />
-                                              <span className="font-semibold">{exercise.sets}</span> sets
+                                            <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-200">
+                                              <Target className="h-4 w-4 mr-2 text-blue-600" />
+                                              <span className="font-bold">{exercise.sets}</span>
+                                              <span className="text-xs ml-1">sets</span>
                                             </div>
                                           )}
                                           {exercise.reps && (
-                                            <div className="flex items-center text-gray-700">
-                                              <Zap className="h-4 w-4 mr-1 text-purple-600" />
-                                              <span className="font-semibold">{exercise.reps}</span> reps
+                                            <div className="flex items-center bg-purple-50 text-purple-700 px-3 py-2 rounded-lg border border-purple-200">
+                                              <Zap className="h-4 w-4 mr-2 text-purple-600" />
+                                              <span className="font-bold">{exercise.reps}</span>
+                                              <span className="text-xs ml-1">reps</span>
                                             </div>
                                           )}
                                           {exercise.rest_seconds && (
-                                            <div className="flex items-center text-gray-700">
-                                              <Clock className="h-4 w-4 mr-1 text-orange-600" />
-                                              <span className="font-semibold">{exercise.rest_seconds}s</span> rest
+                                            <div className="flex items-center bg-orange-50 text-orange-700 px-3 py-2 rounded-lg border border-orange-200">
+                                              <Clock className="h-4 w-4 mr-2 text-orange-600" />
+                                              <span className="font-bold">{exercise.rest_seconds}s</span>
+                                              <span className="text-xs ml-1">rest</span>
                                             </div>
                                           )}
                                           {exercise.weight_recommendation && (
-                                            <div className="flex items-center text-gray-700">
-                                              <Dumbbell className="h-4 w-4 mr-1 text-green-600" />
-                                              <span className="font-semibold">{exercise.weight_recommendation}</span>
+                                            <div className="flex items-center bg-green-50 text-green-700 px-3 py-2 rounded-lg border border-green-200">
+                                              <Dumbbell className="h-4 w-4 mr-2 text-green-600" />
+                                              <span className="font-bold">{exercise.weight_recommendation}</span>
                                             </div>
                                           )}
                                         </div>
                                         
                                         {exercise.instructions && (
-                                          <p className="text-sm text-gray-600 mb-2">{exercise.instructions}</p>
+                                          <div className="bg-gray-50 border-l-4 border-blue-500 p-3 rounded-r-lg mb-3">
+                                            <p className="text-sm text-gray-700 leading-relaxed">{exercise.instructions}</p>
+                                          </div>
                                         )}
                                         
                                         {exercise.video_url && (
@@ -683,9 +702,9 @@ export default function WorkoutPlanDetailPage() {
                                             href={exercise.video_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm text-blue-600 hover:underline"
+                                            className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors border border-blue-200"
                                           >
-                                            📹 Watch tutorial video
+                                            <span className="mr-2">📹</span> Watch tutorial video
                                           </a>
                                         )}
                                       </div>
@@ -694,9 +713,9 @@ export default function WorkoutPlanDetailPage() {
                                         onClick={() => handleDeleteExercise(exercise.id)}
                                         size="sm"
                                         variant="outline"
-                                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        className="text-red-600 hover:bg-red-50 hover:text-red-700 border-2 border-red-200 hover:border-red-300 font-bold transition-all duration-200 ml-4"
                                       >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Trash2 className="h-5 w-5" />
                                       </Button>
                                     </div>
                                   </CardContent>
