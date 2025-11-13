@@ -96,20 +96,15 @@ export default function WorkoutPlanDetailPage() {
     if (!templateId || !gymId) return
     
     try {
-      // Update the template
+      // Update the template (optimistic update happens in the mutation)
       await updateTemplate.mutateAsync({
         id: templateId,
         updates: editForm,
+        gym_id: gymId, // Pass gym_id for optimistic update
       })
       
-      // Invalidate ALL related queries to ensure the main page updates too
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['workoutTemplates', gymId] }),
-        queryClient.invalidateQueries({ queryKey: ['workoutTemplate', templateId] }),
-        queryClient.invalidateQueries({ queryKey: ['workoutAnalytics', gymId] }),
-        refetchTemplate(),
-        refetchExercises()
-      ])
+      // Force Next.js to refresh server-side data
+      router.refresh()
       
       setIsEditing(false)
       alert('✅ Workout plan updated successfully!')

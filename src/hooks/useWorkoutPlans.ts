@@ -41,8 +41,9 @@ export function useWorkoutTemplates(gymId: string | null) {
       return data || []
     },
     enabled: !!gymId,
-    staleTime: 0, // Always consider data stale, so invalidation works immediately
+    staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: true, // Refetch when user returns to the page
+    refetchOnMount: 'always', // Always refetch when component mounts (navigation)
   })
 }
 
@@ -190,7 +191,7 @@ export function useUpdateWorkoutTemplate() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: any; gym_id?: string }) => {
       const { data, error } = await supabase
         .from('workout_plan_templates')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -201,21 +202,65 @@ export function useUpdateWorkoutTemplate() {
       if (error) throw error
       return data
     },
+    onMutate: async ({ id, updates, gym_id }) => {
+      // Only do optimistic updates if gym_id is provided
+      if (!gym_id) return {}
+      
+      // Cancel any outgoing refetches to avoid optimistic update being overwritten
+      await queryClient.cancelQueries({ queryKey: workoutKeys.templates(gym_id) })
+      await queryClient.cancelQueries({ queryKey: workoutKeys.template(id) })
+      
+      // Snapshot the previous values
+      const previousTemplates = queryClient.getQueryData(workoutKeys.templates(gym_id))
+      const previousTemplate = queryClient.getQueryData(workoutKeys.template(id))
+      
+      // Optimistically update the cache for instant UI feedback
+      queryClient.setQueryData(workoutKeys.templates(gym_id), (old: any) => {
+        if (!old) return old
+        return old.map((template: any) => 
+          template.id === id ? { ...template, ...updates } : template
+        )
+      })
+      
+      queryClient.setQueryData(workoutKeys.template(id), (old: any) => {
+        if (!old) return old
+        return { ...old, ...updates }
+      })
+      
+      // Return context with previous values for rollback
+      return { previousTemplates, previousTemplate, gym_id, id }
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousTemplates && context?.gym_id) {
+        queryClient.setQueryData(workoutKeys.templates(context.gym_id), context.previousTemplates)
+      }
+      if (context?.previousTemplate && context?.id) {
+        queryClient.setQueryData(workoutKeys.template(context.id), context.previousTemplate)
+      }
+    },
     onSuccess: (data) => {
-      // Invalidate all related queries to ensure updates show everywhere
-      // refetchType 'active' forces immediate refetch of mounted queries
-      queryClient.invalidateQueries({ 
-        queryKey: workoutKeys.templates(data.gym_id),
-        refetchType: 'active'
+      // Update cache with server response to ensure consistency
+      queryClient.setQueryData(workoutKeys.template(data.id), data)
+      queryClient.setQueryData(workoutKeys.templates(data.gym_id), (old: any) => {
+        if (!old) return [data]
+        return old.map((template: any) => 
+          template.id === data.id ? data : template
+        )
       })
-      queryClient.invalidateQueries({ 
-        queryKey: workoutKeys.template(data.id),
-        refetchType: 'active'
-      })
-      queryClient.invalidateQueries({ 
-        queryKey: ['workoutAnalytics', data.gym_id],
-        refetchType: 'active'
-      })
+    },
+    onSettled: async (data, error, variables) => {
+      // Always refetch to ensure we have latest server data
+      if (data) {
+        await queryClient.invalidateQueries({ 
+          queryKey: workoutKeys.templates(data.gym_id),
+          refetchType: 'all'
+        })
+        await queryClient.invalidateQueries({ 
+          queryKey: ['workoutAnalytics', data.gym_id],
+          refetchType: 'all'
+        })
+      }
     },
   })
 }
