@@ -712,21 +712,21 @@ export default function WorkoutPlanDetailPage() {
                       >
                         <CardContent className="p-8">
                           {dayExercises.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                              <div className="bg-gray-100 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-                                <Activity className="h-12 w-12 text-gray-400" />
+                            <div className="text-center py-6 text-gray-500">
+                              <div className="bg-gray-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                                <Activity className="h-8 w-8 text-gray-400" />
                               </div>
-                              <p className="text-lg font-semibold text-gray-700 mb-2">No exercises yet</p>
-                              <p className="text-sm text-gray-500 mb-6">Get started by adding your first exercise</p>
+                              <p className="text-base font-semibold text-gray-700 mb-1">No exercises yet</p>
+                              <p className="text-xs text-gray-500 mb-4">Get started by adding your first exercise</p>
                               <Button
                                 onClick={() => {
                                   setSelectedDay(day)
                                   setExerciseForm({ ...exerciseForm, day_number: day, repeat_days: [] })
                                   setShowAddExercise(true)
                                 }}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-6 py-3 transition-all duration-200"
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-5 py-2 transition-all duration-200"
                               >
-                                <Plus className="h-5 w-5 mr-2" />
+                                <Plus className="h-4 w-4 mr-2" />
                                 Add First Exercise
                               </Button>
                             </div>
