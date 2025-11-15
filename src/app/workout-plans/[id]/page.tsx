@@ -114,7 +114,8 @@ export default function WorkoutPlanDetailPage() {
         relatedDays.push(ex.day_number)
       }
     })
-    return [...new Set(relatedDays)].sort((a, b) => a - b)
+    // Remove duplicates and sort
+    return Array.from(new Set(relatedDays)).sort((a, b) => a - b)
   }
 
   const toggleDay = (day: number) => {
