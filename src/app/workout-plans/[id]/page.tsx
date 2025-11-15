@@ -60,9 +60,22 @@ export default function WorkoutPlanDetailPage() {
     instructions: '',
     video_url: '',
     order_index: 0,
+    repeat_days: [] as number[],
   })
   const [isCreatingExercise, setIsCreatingExercise] = useState(false)
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null)
+
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+  const toggleRepeatDay = (day: number) => {
+    setExerciseForm(prev => {
+      const prevDays = Array.isArray((prev as any).repeat_days) ? (prev as any).repeat_days.slice() : []
+      const idx = prevDays.indexOf(day)
+      if (idx === -1) prevDays.push(day)
+      else prevDays.splice(idx, 1)
+      return { ...prev, repeat_days: prevDays }
+    })
+  }
 
   // Load template data into edit form
   useEffect(() => {
@@ -143,13 +156,39 @@ export default function WorkoutPlanDetailPage() {
     
     setIsCreatingExercise(true)
     try {
+      // Build inserts: primary day + any repeat days selected
+      const basePayload = {
+        template_id: templateId,
+        gym_id: gymId,
+        exercise_name: exerciseForm.exercise_name,
+        exercise_type: exerciseForm.exercise_type,
+        target_muscle_group: exerciseForm.target_muscle_group,
+        sets: exerciseForm.sets,
+        reps: exerciseForm.reps,
+        duration_minutes: exerciseForm.duration_minutes,
+        rest_seconds: exerciseForm.rest_seconds,
+        weight_recommendation: exerciseForm.weight_recommendation,
+        instructions: exerciseForm.instructions,
+        video_url: exerciseForm.video_url,
+        order_index: exerciseForm.order_index,
+      }
+
+      const daysToInsert = new Set<number>()
+      // always include the selected day
+      daysToInsert.add(exerciseForm.day_number)
+      // include any repeat days (they may include the same day; Set will dedupe)
+      if (Array.isArray(exerciseForm.repeat_days) && exerciseForm.repeat_days.length > 0) {
+        exerciseForm.repeat_days.forEach((d: number) => daysToInsert.add(d))
+      }
+
+      const inserts = Array.from(daysToInsert).map((day) => ({
+        ...basePayload,
+        day_number: day,
+      }))
+
       const { error } = await supabase
         .from('workout_exercises')
-        .insert({
-          template_id: templateId,
-          gym_id: gymId,
-          ...exerciseForm,
-        })
+        .insert(inserts)
       
       if (error) throw error
       
@@ -606,7 +645,7 @@ export default function WorkoutPlanDetailPage() {
                   <Button
                     onClick={() => {
                       setSelectedDay(1)
-                      setExerciseForm({ ...exerciseForm, day_number: 1 })
+                      setExerciseForm({ ...exerciseForm, day_number: 1, repeat_days: [] })
                       setShowAddExercise(true)
                     }}
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-6 py-3 transition-all duration-200 hover:-translate-y-0.5"
@@ -649,7 +688,7 @@ export default function WorkoutPlanDetailPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedDay(day)
-                          setExerciseForm({ ...exerciseForm, day_number: day })
+                          setExerciseForm({ ...exerciseForm, day_number: day, repeat_days: [] })
                           setShowAddExercise(true)
                         }}
                         size="sm"
@@ -681,7 +720,7 @@ export default function WorkoutPlanDetailPage() {
                               <Button
                                 onClick={() => {
                                   setSelectedDay(day)
-                                  setExerciseForm({ ...exerciseForm, day_number: day })
+                                  setExerciseForm({ ...exerciseForm, day_number: day, repeat_days: [] })
                                   setShowAddExercise(true)
                                 }}
                                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl font-bold px-6 py-3 transition-all duration-200"
@@ -840,6 +879,30 @@ export default function WorkoutPlanDetailPage() {
                           <option key={day} value={day}>Day {day} - {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][day - 1]}</option>
                         ))}
                       </select>
+                    </div>
+
+                    {/* Repeat Days */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Repeat On (optional)
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        {dayNames.map((d, i) => {
+                          const dayIndex = i + 1
+                          const selected = Array.isArray(exerciseForm.repeat_days) && exerciseForm.repeat_days.includes(dayIndex)
+                          return (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => toggleRepeatDay(dayIndex)}
+                              className={`px-3 py-2 rounded-md border transition-colors text-sm ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                              {d.slice(0,3)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Select other days to automatically add this exercise to them.</p>
                     </div>
 
                     {/* Exercise Name */}
