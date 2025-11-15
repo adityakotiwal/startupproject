@@ -206,6 +206,7 @@ export default function WorkoutPlanDetailPage() {
         instructions: '',
         video_url: '',
         order_index: 0,
+        repeat_days: [],
       })
       setShowAddExercise(false)
       refetchExercises()
