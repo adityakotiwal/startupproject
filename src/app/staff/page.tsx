@@ -401,16 +401,22 @@ export default function StaffPage() {
                 <button 
                   onClick={() => setShowAdvancedFilters(true)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transform hover:scale-105 transition-all duration-200 ${
-                    Object.keys(advancedFilters).length > 0 
+                    Object.values(advancedFilters).some(value => 
+                      Array.isArray(value) ? value.length > 0 : value !== ''
+                    ) 
                       ? 'bg-purple-600 text-white hover:bg-purple-700' 
                       : 'bg-gray-600 text-white hover:bg-gray-700'
                   }`}
                 >
                   <Filter size={20} />
                   More Filters
-                  {Object.keys(advancedFilters).length > 0 && (
+                  {Object.values(advancedFilters).some(value => 
+                    Array.isArray(value) ? value.length > 0 : value !== ''
+                  ) && (
                     <span className="bg-purple-800 px-2 py-1 rounded-full text-xs">
-                      {Object.keys(advancedFilters).length}
+                      {Object.values(advancedFilters).filter(value => 
+                        Array.isArray(value) ? value.length > 0 : value !== ''
+                      ).length}
                     </span>
                   )}
                 </button>
