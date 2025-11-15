@@ -218,6 +218,48 @@ export default function WorkoutPlanDetailPage() {
     }
   }
 
+  const handleSaveExercise = async () => {
+    // If no editing id is set, fall back to creating
+    if (!editingExerciseId) return handleAddExercise()
+
+    if (!exerciseForm.exercise_name.trim()) {
+      alert('Please provide exercise name')
+      return
+    }
+
+    setIsCreatingExercise(true)
+    try {
+      const { error } = await supabase
+        .from('workout_exercises')
+        .update({
+          exercise_name: exerciseForm.exercise_name,
+          exercise_type: exerciseForm.exercise_type,
+          target_muscle_group: exerciseForm.target_muscle_group,
+          sets: exerciseForm.sets,
+          reps: exerciseForm.reps,
+          duration_minutes: exerciseForm.duration_minutes,
+          rest_seconds: exerciseForm.rest_seconds,
+          weight_recommendation: exerciseForm.weight_recommendation,
+          instructions: exerciseForm.instructions,
+          video_url: exerciseForm.video_url,
+          order_index: exerciseForm.order_index,
+        })
+        .eq('id', editingExerciseId)
+
+      if (error) throw error
+
+      // Close modal and refresh
+      setShowAddExercise(false)
+      setEditingExerciseId(null)
+      refetchExercises()
+    } catch (error) {
+      console.error('Error updating exercise:', error)
+      alert('Failed to update exercise')
+    } finally {
+      setIsCreatingExercise(false)
+    }
+  }
+
   const handleDeleteExercise = async (exerciseId: string) => {
     if (!confirm('Delete this exercise?')) return
     
@@ -646,6 +688,7 @@ export default function WorkoutPlanDetailPage() {
                   <Button
                     onClick={() => {
                       setSelectedDay(1)
+                      setEditingExerciseId(null)
                       setExerciseForm({ ...exerciseForm, day_number: 1, repeat_days: [] })
                       setShowAddExercise(true)
                     }}
@@ -689,6 +732,7 @@ export default function WorkoutPlanDetailPage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedDay(day)
+                          setEditingExerciseId(null)
                           setExerciseForm({ ...exerciseForm, day_number: day, repeat_days: [] })
                           setShowAddExercise(true)
                         }}
@@ -721,6 +765,7 @@ export default function WorkoutPlanDetailPage() {
                               <Button
                                 onClick={() => {
                                   setSelectedDay(day)
+                                  setEditingExerciseId(null)
                                   setExerciseForm({ ...exerciseForm, day_number: day, repeat_days: [] })
                                   setShowAddExercise(true)
                                 }}
@@ -736,7 +781,28 @@ export default function WorkoutPlanDetailPage() {
                                 <Card key={exercise.id} className="border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:border-blue-300">
                                   <CardContent className="p-6">
                                     <div className="flex items-start justify-between">
-                                      <div className="flex-1">
+                                      <div
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => {
+                                          setEditingExerciseId(exercise.id)
+                                          setExerciseForm({
+                                            day_number: exercise.day_number || day,
+                                            exercise_name: exercise.exercise_name || '',
+                                            exercise_type: exercise.exercise_type || 'Strength',
+                                            target_muscle_group: exercise.target_muscle_group || '',
+                                            sets: exercise.sets || 0,
+                                            reps: exercise.reps || '',
+                                            duration_minutes: exercise.duration_minutes || 0,
+                                            rest_seconds: exercise.rest_seconds || 0,
+                                            weight_recommendation: exercise.weight_recommendation || '',
+                                            instructions: exercise.instructions || '',
+                                            video_url: exercise.video_url || '',
+                                            order_index: exercise.order_index || 0,
+                                            repeat_days: Array.isArray((exercise as any).repeat_days) ? (exercise as any).repeat_days.slice() : [],
+                                          })
+                                          setShowAddExercise(true)
+                                        }}
+                                      >
                                         <div className="flex items-center space-x-3 mb-4">
                                           <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center font-bold text-base shadow-md">
                                             {idx + 1}
@@ -849,7 +915,7 @@ export default function WorkoutPlanDetailPage() {
                           <Dumbbell className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-white">Add Exercise</h3>
+                          <h3 className="text-2xl font-bold text-white">{editingExerciseId ? 'Edit Exercise' : 'Add Exercise'}</h3>
                           <p className="text-blue-100 text-sm">Day {exerciseForm.day_number}</p>
                         </div>
                       </div>
@@ -1045,30 +1111,30 @@ export default function WorkoutPlanDetailPage() {
 
                   {/* Modal Footer */}
                   <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-end space-x-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAddExercise(false)}
-                      disabled={isCreatingExercise}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleAddExercise}
-                      disabled={isCreatingExercise || !exerciseForm.exercise_name.trim()}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                    >
-                      {isCreatingExercise ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Exercise
-                        </>
-                      )}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => { setShowAddExercise(false); setEditingExerciseId(null) }}
+                        disabled={isCreatingExercise}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={editingExerciseId ? handleSaveExercise : handleAddExercise}
+                        disabled={isCreatingExercise || !exerciseForm.exercise_name.trim()}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                      >
+                        {isCreatingExercise ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            {editingExerciseId ? 'Saving...' : 'Processing...'}
+                          </>
+                        ) : (
+                          <>
+                            {editingExerciseId ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                            {editingExerciseId ? 'Save Changes' : 'Add Exercise'}
+                          </>
+                        )}
+                      </Button>
                   </div>
                 </div>
               </motion.div>
