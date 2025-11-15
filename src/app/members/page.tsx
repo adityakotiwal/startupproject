@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, Plus, Filter, Download, Users, Phone, Mail, Dumbbell, Eye, CreditCard, Edit, UserX, RefreshCw } from 'lucide-react'
+import { Search, Plus, Filter, Download, Users, Phone, Mail, Dumbbell, Eye, CreditCard, Edit, UserX, RefreshCw, RotateCcw } from 'lucide-react'
 import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
 import Link from 'next/link'
@@ -140,6 +140,30 @@ export default function MembersPage() {
     ageTo: '',
     paymentStatus: ''
   })
+
+  const hasActiveFilters = () => {
+    const hasAdvanced = Object.values(advancedFilters).some(value => 
+      Array.isArray(value) ? value.length > 0 : value !== ''
+    )
+    return hasAdvanced || searchTerm !== '' || statusFilter !== 'all'
+  }
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({
+      status: [],
+      membershipPlan: '',
+      joinDateFrom: '',
+      joinDateTo: '',
+      expiryDateFrom: '',
+      expiryDateTo: '',
+      gender: '',
+      ageFrom: '',
+      ageTo: '',
+      paymentStatus: ''
+    })
+    setSearchTerm('')
+    setStatusFilter('all')
+  }
 
   // 🚀 Data is automatically cached and refreshed by React Query!
   // No manual fetching needed - data loads instantly from cache
@@ -438,6 +462,15 @@ export default function MembersPage() {
                 </span>
               )}
             </button>
+            {hasActiveFilters() && (
+              <button 
+                onClick={handleResetFilters}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-200"
+              >
+                <RotateCcw size={20} />
+                Reset Filters
+              </button>
+            )}
           </div>
 
           {/* Search and Filters */}

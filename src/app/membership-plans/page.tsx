@@ -28,7 +28,8 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  CheckCircle
+  CheckCircle,
+  RotateCcw
 } from 'lucide-react'
 import ProtectedPage from '@/components/ProtectedPage'
 import { useClientOnly } from '@/hooks/useClientOnly'
@@ -92,6 +93,40 @@ export default function MembershipPlansPage() {
   // Refresh callback for modals
   const refreshPlans = () => {
     refetch()
+  }
+
+  const hasActiveFilters = () => {
+    const hasAdvanced = 
+      advancedFilters.statusFilters.length > 0 ||
+      advancedFilters.durationTypes.length > 0 ||
+      advancedFilters.priceRange.min !== '' ||
+      advancedFilters.priceRange.max !== '' ||
+      advancedFilters.popularityFilter !== 'all' ||
+      advancedFilters.memberLimitRange.min !== '' ||
+      advancedFilters.memberLimitRange.max !== '' ||
+      advancedFilters.featuresCountRange.min !== '' ||
+      advancedFilters.featuresCountRange.max !== '' ||
+      advancedFilters.planAgeRange.min !== '' ||
+      advancedFilters.planAgeRange.max !== '' ||
+      advancedFilters.memberCountRange.min !== '' ||
+      advancedFilters.memberCountRange.max !== ''
+    return hasAdvanced || searchTerm !== '' || statusFilter !== 'all' || durationFilter !== 'all'
+  }
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({
+      statusFilters: [],
+      durationTypes: [],
+      priceRange: { min: '', max: '' },
+      popularityFilter: 'all',
+      memberLimitRange: { min: '', max: '' },
+      featuresCountRange: { min: '', max: '' },
+      planAgeRange: { min: '', max: '' },
+      memberCountRange: { min: '', max: '' }
+    })
+    setSearchTerm('')
+    setStatusFilter('all')
+    setDurationFilter('all')
   }
 
   // Filter membership plans based on search term, status, and duration
@@ -357,6 +392,15 @@ export default function MembershipPlansPage() {
               <Filter size={20} />
               More Filters
             </button>
+            {hasActiveFilters() && (
+              <button 
+                onClick={handleResetFilters}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-200"
+              >
+                <RotateCcw size={20} />
+                Reset Filters
+              </button>
+            )}
           </div>
 
           {/* Search and Filters */}

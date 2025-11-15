@@ -102,6 +102,33 @@ export default function EquipmentPage() {
   
   const loading = isLoading || gymLoading
 
+  const hasActiveFilters = () => {
+    const hasAdvanced = Object.values(advancedFilters).some(value => 
+      Array.isArray(value) ? value.length > 0 : value !== ''
+    )
+    return hasAdvanced || searchTerm !== '' || categoryFilter !== 'all' || statusFilter !== 'all'
+  }
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({
+      status: [],
+      category: [],
+      costFrom: '',
+      costTo: '',
+      purchaseDateFrom: '',
+      purchaseDateTo: '',
+      maintenanceDueFrom: '',
+      maintenanceDueTo: '',
+      warrantyStatus: [],
+      maintenanceStatus: [],
+      ageFrom: '',
+      ageTo: ''
+    })
+    setSearchTerm('')
+    setCategoryFilter('all')
+    setStatusFilter('all')
+  }
+
   // Helper function to calculate equipment age
   const calculateEquipmentAge = (purchaseDate: string) => {
     if (!purchaseDate) return 0
@@ -453,6 +480,15 @@ export default function EquipmentPage() {
                 </span>
               )}
             </button>
+            {hasActiveFilters() && (
+              <button 
+                onClick={handleResetFilters}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-200"
+              >
+                <RotateCcw size={20} />
+                Reset Filters
+              </button>
+            )}
           </div>
 
           {/* Search and Filters */}

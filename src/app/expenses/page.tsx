@@ -90,6 +90,28 @@ export default function ExpensesPage() {
   
   const loading = isLoading || gymLoading
 
+  const hasActiveFilters = () => {
+    const hasAdvanced = Object.values(advancedFilters).some(value => 
+      Array.isArray(value) ? value.length > 0 : value !== ''
+    )
+    return hasAdvanced || searchTerm !== '' || categoryFilter !== 'all'
+  }
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({
+      categories: [],
+      amountFrom: '',
+      amountTo: '',
+      dateFrom: '',
+      dateTo: '',
+      ageFrom: '',
+      ageTo: '',
+      descriptionKeywords: []
+    })
+    setSearchTerm('')
+    setCategoryFilter('all')
+  }
+
   // Filter expenses based on search term, category, and advanced filters
   const filteredExpenses = useMemo(() => {
     return expenses.filter(expense => {
@@ -219,16 +241,7 @@ export default function ExpensesPage() {
   }
 
   const resetAdvancedFilters = () => {
-    setAdvancedFilters({
-      categories: [],
-      amountFrom: '',
-      amountTo: '',
-      dateFrom: '',
-      dateTo: '',
-      ageFrom: '',
-      ageTo: '',
-      descriptionKeywords: []
-    })
+    handleResetFilters()
   }
 
   // Calculate totals

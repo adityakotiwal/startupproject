@@ -11,7 +11,7 @@ import {
   Dumbbell, Plus, Search, Filter, TrendingUp, Users, 
   Award, Target, Calendar, MoreVertical, Edit, Trash2, 
   Copy, Eye, Clock, Zap, ArrowUp, Activity, ChevronDown, CheckCircle,
-  UserCheck, X, Pause, Play, BarChart3, Mail, Phone
+  UserCheck, X, Pause, Play, BarChart3, Mail, Phone, RotateCcw
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -282,6 +282,16 @@ export default function WorkoutPlansPage() {
     }
   }
 
+  const hasActiveFilters = () => {
+    return searchQuery !== '' || filterDifficulty !== 'All' || filterCategory !== 'All'
+  }
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setFilterDifficulty('All')
+    setFilterCategory('All')
+  }
+
   // Filter templates
   const filteredTemplates = useMemo(() => {
     return templates.filter(template => {
@@ -506,6 +516,16 @@ export default function WorkoutPlansPage() {
                       Filters
                       <ChevronDown className={`h-4 w-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                     </Button>
+                    {hasActiveFilters() && (
+                      <Button
+                        variant="outline"
+                        onClick={handleResetFilters}
+                        className="bg-red-600 text-white hover:bg-red-700 h-12 px-6 border-2 border-red-600"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
