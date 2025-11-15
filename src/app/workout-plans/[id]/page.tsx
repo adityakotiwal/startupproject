@@ -99,6 +99,24 @@ export default function WorkoutPlanDetailPage() {
     return acc
   }, {} as Record<number, any[]>)
 
+  // Helper function to find all days that have similar exercises (same name and details)
+  const findRelatedExerciseDays = (exercise: any): number[] => {
+    const relatedDays: number[] = []
+    exercises.forEach((ex: any) => {
+      // Match by exercise name and key properties (they might be copies/repeats)
+      if (
+        ex.exercise_name === exercise.exercise_name &&
+        ex.exercise_type === exercise.exercise_type &&
+        ex.sets === exercise.sets &&
+        ex.reps === exercise.reps &&
+        ex.target_muscle_group === exercise.target_muscle_group
+      ) {
+        relatedDays.push(ex.day_number)
+      }
+    })
+    return [...new Set(relatedDays)].sort((a, b) => a - b)
+  }
+
   const toggleDay = (day: number) => {
     setExpandedDays(prev => 
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
@@ -229,7 +247,33 @@ export default function WorkoutPlanDetailPage() {
 
     setIsCreatingExercise(true)
     try {
-      // Update the existing exercise (including day_number if changed)
+      // Get the original exercise to find all related copies
+      const originalExercise = exercises.find((ex: any) => ex.id === editingExerciseId)
+      if (!originalExercise) throw new Error('Exercise not found')
+
+      // Find all related exercise IDs (copies on other days with same properties)
+      const relatedExerciseIds = exercises
+        .filter((ex: any) => 
+          ex.exercise_name === originalExercise.exercise_name &&
+          ex.exercise_type === originalExercise.exercise_type &&
+          ex.sets === originalExercise.sets &&
+          ex.reps === originalExercise.reps &&
+          ex.target_muscle_group === originalExercise.target_muscle_group &&
+          ex.id !== editingExerciseId // Exclude the current one
+        )
+        .map((ex: any) => ex.id)
+
+      // Step 1: Delete all related copies (old repeats)
+      if (relatedExerciseIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('workout_exercises')
+          .delete()
+          .in('id', relatedExerciseIds)
+
+        if (deleteError) throw deleteError
+      }
+
+      // Step 2: Update the main exercise
       const { error: updateError } = await supabase
         .from('workout_exercises')
         .update({
@@ -250,9 +294,8 @@ export default function WorkoutPlanDetailPage() {
 
       if (updateError) throw updateError
 
-      // Handle repeat days - create copies on additional selected days
+      // Step 3: Create new copies on selected repeat days (excluding current day)
       if (Array.isArray(exerciseForm.repeat_days) && exerciseForm.repeat_days.length > 0) {
-        // Only insert on days that are different from the current day
         const additionalDays = exerciseForm.repeat_days.filter(d => d !== exerciseForm.day_number)
         
         if (additionalDays.length > 0) {
@@ -823,6 +866,9 @@ export default function WorkoutPlanDetailPage() {
                                       <div
                                         className="flex-1 cursor-pointer relative"
                                         onClick={() => {
+                                          // Find all days where this exercise exists (including repeats)
+                                          const allRelatedDays = findRelatedExerciseDays(exercise)
+                                          
                                           setEditingExerciseId(exercise.id)
                                           setExerciseForm({
                                             day_number: exercise.day_number || day,
@@ -837,7 +883,7 @@ export default function WorkoutPlanDetailPage() {
                                             instructions: exercise.instructions || '',
                                             video_url: exercise.video_url || '',
                                             order_index: exercise.order_index || 0,
-                                            repeat_days: Array.isArray((exercise as any).repeat_days) ? (exercise as any).repeat_days.slice() : [],
+                                            repeat_days: allRelatedDays,
                                           })
                                           setShowAddExercise(true)
                                         }}
