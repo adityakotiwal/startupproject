@@ -229,9 +229,11 @@ export default function WorkoutPlanDetailPage() {
 
     setIsCreatingExercise(true)
     try {
-      const { error } = await supabase
+      // Update the existing exercise (including day_number if changed)
+      const { error: updateError } = await supabase
         .from('workout_exercises')
         .update({
+          day_number: exerciseForm.day_number,
           exercise_name: exerciseForm.exercise_name,
           exercise_type: exerciseForm.exercise_type,
           target_muscle_group: exerciseForm.target_muscle_group,
@@ -246,12 +248,49 @@ export default function WorkoutPlanDetailPage() {
         })
         .eq('id', editingExerciseId)
 
-      if (error) throw error
+      if (updateError) throw updateError
+
+      // Handle repeat days - create copies on additional selected days
+      if (Array.isArray(exerciseForm.repeat_days) && exerciseForm.repeat_days.length > 0) {
+        // Only insert on days that are different from the current day
+        const additionalDays = exerciseForm.repeat_days.filter(d => d !== exerciseForm.day_number)
+        
+        if (additionalDays.length > 0) {
+          const basePayload = {
+            template_id: templateId,
+            gym_id: gymId,
+            exercise_name: exerciseForm.exercise_name,
+            exercise_type: exerciseForm.exercise_type,
+            target_muscle_group: exerciseForm.target_muscle_group,
+            sets: exerciseForm.sets,
+            reps: exerciseForm.reps,
+            duration_minutes: exerciseForm.duration_minutes,
+            rest_seconds: exerciseForm.rest_seconds,
+            weight_recommendation: exerciseForm.weight_recommendation,
+            instructions: exerciseForm.instructions,
+            video_url: exerciseForm.video_url,
+            order_index: exerciseForm.order_index,
+          }
+
+          const inserts = additionalDays.map((day) => ({
+            ...basePayload,
+            day_number: day,
+          }))
+
+          const { error: insertError } = await supabase
+            .from('workout_exercises')
+            .insert(inserts)
+
+          if (insertError) throw insertError
+        }
+      }
 
       // Close modal and refresh
       setShowAddExercise(false)
       setEditingExerciseId(null)
       refetchExercises()
+      
+      alert('✅ Exercise updated successfully!')
     } catch (error) {
       console.error('Error updating exercise:', error)
       alert('Failed to update exercise')
@@ -778,11 +817,11 @@ export default function WorkoutPlanDetailPage() {
                           ) : (
                             <div className="space-y-5">
                               {dayExercises.map((exercise: any, idx: number) => (
-                                <Card key={exercise.id} className="border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:border-blue-300">
+                                <Card key={exercise.id} className="group border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:border-blue-400 hover:bg-blue-50">
                                   <CardContent className="p-6">
                                     <div className="flex items-start justify-between">
                                       <div
-                                        className="flex-1 cursor-pointer"
+                                        className="flex-1 cursor-pointer relative"
                                         onClick={() => {
                                           setEditingExerciseId(exercise.id)
                                           setExerciseForm({
@@ -803,6 +842,12 @@ export default function WorkoutPlanDetailPage() {
                                           setShowAddExercise(true)
                                         }}
                                       >
+                                        {/* Click to edit indicator */}
+                                        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                          <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg shadow-lg">
+                                            ✏️ Click to edit
+                                          </span>
+                                        </div>
                                         <div className="flex items-center space-x-3 mb-4">
                                           <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center font-bold text-base shadow-md">
                                             {idx + 1}
@@ -951,25 +996,40 @@ export default function WorkoutPlanDetailPage() {
                     {/* Repeat Days */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Repeat On (optional)
+                        {editingExerciseId ? '📋 Copy to Additional Days (optional)' : '📋 Repeat On Additional Days (optional)'}
                       </label>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-wrap gap-2">
                         {dayNames.map((d, i) => {
                           const dayIndex = i + 1
                           const selected = Array.isArray(exerciseForm.repeat_days) && exerciseForm.repeat_days.includes(dayIndex)
+                          const isCurrentDay = dayIndex === exerciseForm.day_number
                           return (
                             <button
                               key={d}
                               type="button"
-                              onClick={() => toggleRepeatDay(dayIndex)}
-                              className={`px-3 py-2 rounded-md border transition-colors text-sm ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                              onClick={() => !isCurrentDay && toggleRepeatDay(dayIndex)}
+                              disabled={isCurrentDay}
+                              className={`px-3 py-2 rounded-md border transition-colors text-sm font-medium ${
+                                isCurrentDay 
+                                  ? 'bg-green-100 text-green-700 border-green-300 cursor-not-allowed' 
+                                  : selected 
+                                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' 
+                                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                              }`}
                             >
                               {d.slice(0,3)}
+                              {isCurrentDay && ' ✓'}
                             </button>
                           )
                         })}
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">Select other days to automatically add this exercise to them.</p>
+                      <div className="mt-2 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        {editingExerciseId ? (
+                          <p>💡 <span className="font-semibold">Editing mode:</span> Select additional days to create copies of this exercise. The current day (marked with ✓) will be updated.</p>
+                        ) : (
+                          <p>💡 Select additional days to automatically add this exercise to multiple days at once.</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Exercise Name */}
@@ -1110,7 +1170,37 @@ export default function WorkoutPlanDetailPage() {
                   </div>
 
                   {/* Modal Footer */}
-                  <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-end space-x-3">
+                  <div className="bg-gray-50 px-6 py-4 rounded-b-2xl">
+                    {/* Action Summary */}
+                    {(() => {
+                      const additionalDays = Array.isArray(exerciseForm.repeat_days) 
+                        ? exerciseForm.repeat_days.filter(d => d !== exerciseForm.day_number) 
+                        : []
+                      const totalDays = editingExerciseId 
+                        ? 1 + additionalDays.length 
+                        : new Set([exerciseForm.day_number, ...exerciseForm.repeat_days]).size
+                      
+                      if (totalDays > 1) {
+                        return (
+                          <div className="mb-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                            <p className="text-sm text-blue-900 font-medium">
+                              {editingExerciseId ? (
+                                <>
+                                  ✨ Will update this exercise on Day {exerciseForm.day_number} and create {additionalDays.length} {additionalDays.length === 1 ? 'copy' : 'copies'} on {additionalDays.length === 1 ? 'day' : 'days'}: {additionalDays.sort((a, b) => a - b).join(', ')}
+                                </>
+                              ) : (
+                                <>
+                                  ✨ Will add this exercise to {totalDays} days: {Array.from(new Set([exerciseForm.day_number, ...exerciseForm.repeat_days])).sort((a, b) => a - b).join(', ')}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
+                    
+                    <div className="flex items-center justify-end space-x-3">
                       <Button
                         variant="outline"
                         onClick={() => { setShowAddExercise(false); setEditingExerciseId(null) }}
@@ -1135,6 +1225,7 @@ export default function WorkoutPlanDetailPage() {
                           </>
                         )}
                       </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
